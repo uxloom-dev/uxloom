@@ -1,0 +1,38 @@
+{
+  "headline": "5 screens registered — 0 required states not yet designed.",
+  "perScreen": [
+    {
+      "screen": "SignupScreen",
+      "required": 4,
+      "designed": 4,
+      "missing": []
+    },
+    {
+      "screen": "VerifyEmailScreen",
+      "required": 3,
+      "designed": 3,
+      "missing": []
+    },
+    {
+      "screen": "WorkspaceScreen",
+      "required": 3,
+      "designed": 3,
+      "missing": []
+    },
+    {
+      "screen": "InviteScreen",
+      "required": 3,
+      "designed": 3,
+      "missing": []
+    },
+    {
+      "screen": "DashboardScreen",
+      "required": 4,
+      "designed": 4,
+      "missing": []
+    }
+  ],
+  "happyPathScreens": 0,
+  "errors": 0,
+  "warnings": 0
+}

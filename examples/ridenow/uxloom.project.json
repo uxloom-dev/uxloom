@@ -1,0 +1,199 @@
+{
+  "name": "ridenow",
+  "formatVersion": "0.1",
+  "platforms": [
+    "ios",
+    "android"
+  ],
+  "journeys": [
+    {
+      "id": "book-ride",
+      "goal": "Rider books and completes a trip",
+      "entry": "search",
+      "states": {
+        "search": {
+          "screen": "SearchScreen",
+          "on": {
+            "DEST_SET": "select",
+            "SCHEDULE_LATER": "schedule",
+            "OFFLINE": "search#error.offline",
+            "NO_GPS": "search#error.gps"
+          }
+        },
+        "select": {
+          "screen": "SelectRideScreen",
+          "on": {
+            "RIDE_CHOSEN": "pickup",
+            "NO_RIDES": "select#empty",
+            "BACK": "search"
+          }
+        },
+        "pickup": {
+          "screen": "PickupScreen",
+          "on": {
+            "CONFIRM": "tracking",
+            "BACK": "select",
+            "OFFLINE": "pickup#error.offline"
+          }
+        },
+        "tracking": {
+          "screen": "TrackingScreen",
+          "on": {
+            "ARRIVED": "complete",
+            "DRIVER_CANCELLED": "select",
+            "OFFLINE": "tracking#error.offline",
+            "GPS_LOST": "tracking#error.gps"
+          }
+        },
+        "complete": {
+          "screen": "CompleteScreen",
+          "final": true
+        },
+        "schedule": {
+          "screen": "ScheduleScreen",
+          "on": {
+            "SCHEDULED": "complete",
+            "CANCEL": "search",
+            "OFFLINE": "schedule#error.offline"
+          }
+        }
+      }
+    }
+  ],
+  "screens": [
+    {
+      "id": "SearchScreen",
+      "intent": "Destination in, minimum taps",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.offline",
+        "error.gps"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.offline",
+        "error.gps"
+      ],
+      "components": [
+        {
+          "semantic": "Button.Icon",
+          "label": {
+            "key": "search.locate",
+            "en": "Locate me",
+            "maxChars": 20
+          },
+          "minTargetPx": 48,
+          "interactive": true
+        }
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Map canvas is never empty; recents list has its own zero-item design inside default."
+        }
+      ]
+    },
+    {
+      "id": "SelectRideScreen",
+      "intent": "Compare options, pick in one tap",
+      "requiredStates": [
+        "default",
+        "empty",
+        "loading",
+        "error.offline"
+      ],
+      "designedStates": [
+        "default",
+        "empty",
+        "loading",
+        "error.offline"
+      ]
+    },
+    {
+      "id": "PickupScreen",
+      "intent": "Confirm pickup point with confidence",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.offline"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.offline"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Pin-on-map confirmation; no list content."
+        }
+      ]
+    },
+    {
+      "id": "TrackingScreen",
+      "intent": "Reduce anxiety while waiting",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.offline",
+        "error.gps"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.offline",
+        "error.gps"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Only reachable with an active trip."
+        }
+      ]
+    },
+    {
+      "id": "CompleteScreen",
+      "intent": "Close the loop: fare, rating, receipt",
+      "requiredStates": [
+        "default",
+        "loading"
+      ],
+      "designedStates": [
+        "default",
+        "loading"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Terminal screen; reached only with a completed trip."
+        },
+        {
+          "state": "error.any",
+          "reason": "Payment failures are handled inside the trip flow before arrival."
+        }
+      ]
+    },
+    {
+      "id": "ScheduleScreen",
+      "intent": "Book for later without re-entering details",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.offline"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.offline"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Date-picker form; starts at sensible defaults."
+        }
+      ]
+    }
+  ]
+}

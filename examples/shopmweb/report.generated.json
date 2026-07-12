@@ -1,0 +1,134 @@
+{
+  "findings": [
+    {
+      "critic": "journey-completeness",
+      "severity": "error",
+      "journey": "checkout",
+      "state": "promo",
+      "message": "State \"promo\" is unreachable from entry \"cart\". It was designed but no user can ever arrive there.",
+      "fix": "Add a transition leading to \"promo\" or remove it."
+    },
+    {
+      "critic": "state-coverage",
+      "severity": "error",
+      "screen": "CartScreen",
+      "state": "empty",
+      "message": "Screen \"CartScreen\" requires state \"empty\" but it has not been designed.",
+      "fix": "Design the \"empty\" state of \"CartScreen\" (or remove it from requiredStates if truly not needed)."
+    },
+    {
+      "critic": "state-coverage",
+      "severity": "error",
+      "screen": "CartScreen",
+      "state": "loading",
+      "message": "Screen \"CartScreen\" requires state \"loading\" but it has not been designed.",
+      "fix": "Design the \"loading\" state of \"CartScreen\" (or remove it from requiredStates if truly not needed)."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "CartScreen",
+      "message": "Screen \"CartScreen\" contract looks happy-path-only. Missing baseline states: error.*.",
+      "fix": "Add error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "AddressScreen",
+      "message": "Screen \"AddressScreen\" contract looks happy-path-only. Missing baseline states: loading, empty, error.*.",
+      "fix": "Add loading, empty, error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "state-coverage",
+      "severity": "error",
+      "screen": "PaymentScreen",
+      "state": "loading",
+      "message": "Screen \"PaymentScreen\" requires state \"loading\" but it has not been designed.",
+      "fix": "Design the \"loading\" state of \"PaymentScreen\" (or remove it from requiredStates if truly not needed)."
+    },
+    {
+      "critic": "state-coverage",
+      "severity": "error",
+      "screen": "PaymentScreen",
+      "state": "error.declined",
+      "message": "Screen \"PaymentScreen\" requires state \"error.declined\" but it has not been designed.",
+      "fix": "Design the \"error.declined\" state of \"PaymentScreen\" (or remove it from requiredStates if truly not needed)."
+    },
+    {
+      "critic": "state-coverage",
+      "severity": "error",
+      "screen": "PaymentScreen",
+      "state": "error.network",
+      "message": "Screen \"PaymentScreen\" requires state \"error.network\" but it has not been designed.",
+      "fix": "Design the \"error.network\" state of \"PaymentScreen\" (or remove it from requiredStates if truly not needed)."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "PaymentScreen",
+      "message": "Screen \"PaymentScreen\" contract looks happy-path-only. Missing baseline states: empty.",
+      "fix": "Add empty to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "ConfirmScreen",
+      "message": "Screen \"ConfirmScreen\" contract looks happy-path-only. Missing baseline states: loading, empty, error.*.",
+      "fix": "Add loading, empty, error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "PromoScreen",
+      "message": "Screen \"PromoScreen\" contract looks happy-path-only. Missing baseline states: loading, empty, error.*.",
+      "fix": "Add loading, empty, error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "wcag-contrast",
+      "severity": "error",
+      "screen": "CartScreen",
+      "component": "Button.Primary",
+      "message": "\"Button.Primary\" on screen \"CartScreen\" has contrast 2.95:1 (#8A8F98 on #F4F4F4) — below WCAG AA 4.5:1 for normal text.",
+      "fix": "Darken/lighten one side until the ratio reaches 4.5:1."
+    },
+    {
+      "critic": "touch-targets",
+      "severity": "error",
+      "screen": "CartScreen",
+      "component": "Button.Primary",
+      "message": "\"Button.Primary\" on \"CartScreen\" has a 40px target — below the mweb minimum (44px recommended for touch web).",
+      "fix": "Increase the target (including padding/hit-slop) to at least 44px on mweb."
+    },
+    {
+      "critic": "touch-targets",
+      "severity": "error",
+      "screen": "CartScreen",
+      "component": "Button.Primary",
+      "message": "\"Button.Primary\" on \"CartScreen\" has a 40px target — below the android minimum (Material 48dp).",
+      "fix": "Increase the target (including padding/hit-slop) to at least 48px on android."
+    },
+    {
+      "critic": "text-expansion",
+      "severity": "warning",
+      "screen": "CartScreen",
+      "component": "Button.Primary",
+      "message": "Label \"Proceed to secure checkout\" (cart.checkout) is 26 chars; at ×1.4 localization expansion it projects to 37, over the layout budget of 24. German will break this.",
+      "fix": "Shorten the English source, or widen the layout budget to ≥ 37 chars."
+    }
+  ],
+  "summary": {
+    "errors": 9,
+    "warnings": 6,
+    "journeys": 1,
+    "screens": 5,
+    "stateCoverage": {
+      "designed": 5,
+      "required": 10
+    }
+  }
+}

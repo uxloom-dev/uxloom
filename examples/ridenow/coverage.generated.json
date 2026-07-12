@@ -1,0 +1,44 @@
+{
+  "headline": "6 screens registered — 0 required states not yet designed, and 6 screen contracts are happy-path-only (their gaps are not even counted yet).",
+  "perScreen": [
+    {
+      "screen": "SearchScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "SelectRideScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "PickupScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "TrackingScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "CompleteScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "ScheduleScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    }
+  ],
+  "happyPathScreens": 6,
+  "errors": 3,
+  "warnings": 7
+}

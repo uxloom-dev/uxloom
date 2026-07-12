@@ -1,0 +1,13 @@
+{
+  "findings": [],
+  "summary": {
+    "errors": 0,
+    "warnings": 0,
+    "journeys": 1,
+    "screens": 5,
+    "stateCoverage": {
+      "designed": 16,
+      "required": 16
+    }
+  }
+}

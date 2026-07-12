@@ -1,0 +1,38 @@
+{
+  "headline": "5 screens registered — 0 required states not yet designed, and 5 screen contracts are happy-path-only (their gaps are not even counted yet).",
+  "perScreen": [
+    {
+      "screen": "SignupScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "VerifyEmailScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "WorkspaceScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "InviteScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "DashboardScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    }
+  ],
+  "happyPathScreens": 5,
+  "errors": 1,
+  "warnings": 6
+}

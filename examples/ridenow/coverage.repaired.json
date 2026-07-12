@@ -1,0 +1,44 @@
+{
+  "headline": "6 screens registered — 0 required states not yet designed.",
+  "perScreen": [
+    {
+      "screen": "SearchScreen",
+      "required": 4,
+      "designed": 4,
+      "missing": []
+    },
+    {
+      "screen": "SelectRideScreen",
+      "required": 4,
+      "designed": 4,
+      "missing": []
+    },
+    {
+      "screen": "PickupScreen",
+      "required": 3,
+      "designed": 3,
+      "missing": []
+    },
+    {
+      "screen": "TrackingScreen",
+      "required": 4,
+      "designed": 4,
+      "missing": []
+    },
+    {
+      "screen": "CompleteScreen",
+      "required": 2,
+      "designed": 2,
+      "missing": []
+    },
+    {
+      "screen": "ScheduleScreen",
+      "required": 3,
+      "designed": 3,
+      "missing": []
+    }
+  ],
+  "happyPathScreens": 0,
+  "errors": 0,
+  "warnings": 0
+}

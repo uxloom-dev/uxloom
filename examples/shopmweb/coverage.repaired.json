@@ -1,0 +1,38 @@
+{
+  "headline": "5 screens registered — 0 required states not yet designed.",
+  "perScreen": [
+    {
+      "screen": "CartScreen",
+      "required": 4,
+      "designed": 4,
+      "missing": []
+    },
+    {
+      "screen": "AddressScreen",
+      "required": 3,
+      "designed": 3,
+      "missing": []
+    },
+    {
+      "screen": "PaymentScreen",
+      "required": 4,
+      "designed": 4,
+      "missing": []
+    },
+    {
+      "screen": "ConfirmScreen",
+      "required": 2,
+      "designed": 2,
+      "missing": []
+    },
+    {
+      "screen": "PromoScreen",
+      "required": 3,
+      "designed": 3,
+      "missing": []
+    }
+  ],
+  "happyPathScreens": 0,
+  "errors": 0,
+  "warnings": 0
+}

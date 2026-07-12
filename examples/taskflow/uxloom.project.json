@@ -1,0 +1,178 @@
+{
+  "name": "taskflow",
+  "formatVersion": "0.1",
+  "platforms": [
+    "web"
+  ],
+  "journeys": [
+    {
+      "id": "onboarding",
+      "goal": "New user reaches a working dashboard with one project created",
+      "entry": "signup",
+      "states": {
+        "signup": {
+          "screen": "SignupScreen",
+          "on": {
+            "SUBMIT": "verify",
+            "INVALID": "signup#error.validation",
+            "EMAIL_TAKEN": "signup#error.taken"
+          }
+        },
+        "verify": {
+          "screen": "VerifyEmailScreen",
+          "on": {
+            "VERIFIED": "workspace",
+            "RESEND": "verify",
+            "CHANGE_EMAIL": "signup",
+            "EXPIRED": "verify#error.expired"
+          }
+        },
+        "workspace": {
+          "screen": "WorkspaceScreen",
+          "on": {
+            "CREATE": "invite",
+            "CREATE_FAILED": "workspace#error.network"
+          }
+        },
+        "invite": {
+          "screen": "InviteScreen",
+          "on": {
+            "SENT": "dashboard",
+            "SKIP": "dashboard",
+            "INVALID_EMAIL": "invite#error.validation"
+          }
+        },
+        "dashboard": {
+          "screen": "DashboardScreen",
+          "final": true
+        }
+      }
+    }
+  ],
+  "screens": [
+    {
+      "id": "SignupScreen",
+      "intent": "Zero-friction account creation",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.validation",
+        "error.taken"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.validation",
+        "error.taken"
+      ],
+      "components": [
+        {
+          "semantic": "Button.Primary",
+          "label": {
+            "key": "signup.cta",
+            "en": "Create account",
+            "maxChars": 22
+          },
+          "fg": "#FFFFFF",
+          "bg": "#4F46E5",
+          "minTargetPx": 44,
+          "interactive": true
+        },
+        {
+          "semantic": "Button.Secondary",
+          "label": {
+            "key": "signup.sso",
+            "en": "Continue with Google",
+            "maxChars": 30
+          },
+          "fg": "#374151",
+          "bg": "#F9FAFB",
+          "minTargetPx": 44,
+          "interactive": true
+        }
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Signup form starts blank by definition."
+        }
+      ]
+    },
+    {
+      "id": "VerifyEmailScreen",
+      "intent": "Get the user back from their inbox",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.expired"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.expired"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Static instruction screen; no data content."
+        }
+      ]
+    },
+    {
+      "id": "WorkspaceScreen",
+      "intent": "Name the workspace, pick a use-case",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.network"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.network"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Setup form starts blank by definition."
+        }
+      ]
+    },
+    {
+      "id": "InviteScreen",
+      "intent": "Invite teammates, or skip without guilt",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.validation"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.validation"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Invite form starts blank; skip path exists."
+        }
+      ]
+    },
+    {
+      "id": "DashboardScreen",
+      "intent": "First-run: show the path to value, not a void",
+      "requiredStates": [
+        "default",
+        "empty",
+        "loading",
+        "error.network"
+      ],
+      "designedStates": [
+        "default",
+        "empty",
+        "loading",
+        "error.network"
+      ]
+    }
+  ]
+}

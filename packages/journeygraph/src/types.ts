@@ -63,6 +63,16 @@ export interface ScreenComponent {
 
 export type PlatformId = "web" | "mweb" | "ios" | "android";
 
+/**
+ * A documented reason a baseline state (empty / loading / error.*) does not
+ * apply to a screen. Suppresses the happy-path warning for that state —
+ * auditable, never silent. Use state "error.any" to exempt the error family.
+ */
+export interface Exemption {
+  state: string;
+  reason: string;
+}
+
 export interface Screen {
   id: string;
   /** One sentence: what this screen must let the user do. */
@@ -74,6 +84,8 @@ export interface Screen {
   components?: ScreenComponent[];
   /** Platforms this screen ships on. Defaults to all project platforms. */
   platforms?: PlatformId[];
+  /** Documented non-applicability of baseline states. */
+  exemptions?: Exemption[];
 }
 
 export interface Project {
@@ -88,6 +100,8 @@ export interface Project {
 /** A single issue reported by a critic. */
 export interface Finding {
   critic: string;
+  /** Stable machine-readable id for a class of finding. */
+  code?: string;
   severity: "error" | "warning";
   journey?: string;
   state?: string;

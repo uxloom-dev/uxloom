@@ -1,0 +1,169 @@
+{
+  "name": "shopmweb",
+  "formatVersion": "0.1",
+  "platforms": [
+    "mweb",
+    "android"
+  ],
+  "journeys": [
+    {
+      "id": "checkout",
+      "goal": "Returning shopper completes purchase in under 90 seconds",
+      "entry": "cart",
+      "states": {
+        "cart": {
+          "screen": "CartScreen",
+          "on": {
+            "CHECKOUT": "address",
+            "APPLY_PROMO": "promo",
+            "CART_EMPTY": "cart#empty"
+          }
+        },
+        "promo": {
+          "screen": "PromoScreen",
+          "on": {
+            "APPLY": "cart",
+            "CANCEL": "cart"
+          }
+        },
+        "address": {
+          "screen": "AddressScreen",
+          "on": {
+            "CONTINUE": "payment",
+            "INVALID_ADDRESS": "address#error.validation",
+            "BACK": "cart"
+          }
+        },
+        "payment": {
+          "screen": "PaymentScreen",
+          "on": {
+            "PAY": "confirm",
+            "CARD_DECLINED": "payment#error.declined",
+            "OFFLINE": "payment#error.network",
+            "BACK": "address"
+          }
+        },
+        "confirm": {
+          "screen": "ConfirmScreen",
+          "final": true
+        }
+      }
+    }
+  ],
+  "screens": [
+    {
+      "id": "CartScreen",
+      "intent": "Review items, reach checkout in one action",
+      "requiredStates": [
+        "default",
+        "empty",
+        "loading",
+        "error.network"
+      ],
+      "designedStates": [
+        "default",
+        "empty",
+        "loading",
+        "error.network"
+      ],
+      "components": [
+        {
+          "semantic": "Button.Primary",
+          "label": {
+            "key": "cart.checkout",
+            "en": "Checkout",
+            "maxChars": 24
+          },
+          "fg": "#FFFFFF",
+          "bg": "#B3541E",
+          "minTargetPx": 48,
+          "interactive": true
+        }
+      ]
+    },
+    {
+      "id": "AddressScreen",
+      "intent": "Capture delivery address with validation",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.validation"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.validation"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Form screen; fields start blank by definition, no empty-data state exists."
+        }
+      ]
+    },
+    {
+      "id": "PaymentScreen",
+      "intent": "Collect payment with minimum anxiety",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.declined",
+        "error.network"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.declined",
+        "error.network"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Payment form has no data-list to be empty."
+        }
+      ]
+    },
+    {
+      "id": "ConfirmScreen",
+      "intent": "Reassure: order placed, what happens next",
+      "requiredStates": [
+        "default",
+        "loading"
+      ],
+      "designedStates": [
+        "default",
+        "loading"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Terminal confirmation; reached only with a placed order."
+        },
+        {
+          "state": "error.any",
+          "reason": "Failures surface on PaymentScreen before this state is reachable."
+        }
+      ]
+    },
+    {
+      "id": "PromoScreen",
+      "intent": "Apply a promo code without losing the cart",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.invalid"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.invalid"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Single input form; no list content."
+        }
+      ]
+    }
+  ]
+}

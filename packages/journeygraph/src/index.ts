@@ -6,6 +6,7 @@ export {
   ScreenComponentSchema,
   LabelSchema,
   PlatformIdSchema,
+  ExemptionSchema,
 } from "./schema.js";
 
 import { ProjectSchema } from "./schema.js";

@@ -126,9 +126,22 @@ export function createServer(store = new ProjectStore()): McpServer {
         missing: s.requiredStates.filter((st) => !s.designedStates.includes(st)),
       }));
       const missingTotal = perScreen.reduce((n, s) => n + s.missing.length, 0);
+      // A weak contract hides gaps: count screens whose contract itself is
+      // happy-path-only, so a rosy "0 missing" can't mislead.
+      const happyPathScreens = new Set(
+        report.findings
+          .filter((f) => f.code === "happy-path-contract")
+          .map((f) => f.screen),
+      ).size;
+      const headline =
+        `${project.screens.length} screens registered — ${missingTotal} required states not yet designed` +
+        (happyPathScreens > 0
+          ? `, and ${happyPathScreens} screen contracts are happy-path-only (their gaps are not even counted yet).`
+          : ".");
       return json({
-        headline: `${project.screens.length} screens registered — ${missingTotal} required states not yet designed.`,
+        headline,
         perScreen,
+        happyPathScreens,
         errors: report.summary.errors,
         warnings: report.summary.warnings,
       });

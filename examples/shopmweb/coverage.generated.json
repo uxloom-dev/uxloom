@@ -1,0 +1,45 @@
+{
+  "headline": "5 screens registered — 5 required states not yet designed, and 5 screen contracts are happy-path-only (their gaps are not even counted yet).",
+  "perScreen": [
+    {
+      "screen": "CartScreen",
+      "required": 3,
+      "designed": 1,
+      "missing": [
+        "empty",
+        "loading"
+      ]
+    },
+    {
+      "screen": "AddressScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "PaymentScreen",
+      "required": 4,
+      "designed": 1,
+      "missing": [
+        "loading",
+        "error.declined",
+        "error.network"
+      ]
+    },
+    {
+      "screen": "ConfirmScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    },
+    {
+      "screen": "PromoScreen",
+      "required": 1,
+      "designed": 1,
+      "missing": []
+    }
+  ],
+  "happyPathScreens": 5,
+  "errors": 9,
+  "warnings": 6
+}

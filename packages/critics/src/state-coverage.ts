@@ -46,16 +46,38 @@ export function stateCoverage(project: Project): Finding[] {
       }
     }
 
+    // Exemptions: a documented reason a baseline state doesn't apply.
+    // "error.any" (or any "error"-prefixed state) exempts the error family.
+    const exemptions = screen.exemptions ?? [];
+    const exempted = new Set(exemptions.map((e) => e.state));
+    const errorExempt = exemptions.some((e) => e.state.startsWith(ERROR_PREFIX));
+
+    for (const exemption of exemptions) {
+      if (required.has(exemption.state)) {
+        findings.push({
+          critic: CRITIC,
+          code: "contradictory-exemption",
+          severity: "warning",
+          screen: screen.id,
+          state: exemption.state,
+          message: `Screen "${screen.id}" exempts state "${exemption.state}" but also requires it — the exemption is stale or the contract is wrong.`,
+          fix: `Remove the exemption or remove "${exemption.state}" from requiredStates.`,
+        });
+      }
+    }
+
     const hasError = screen.requiredStates.some((s) => s.startsWith(ERROR_PREFIX));
-    const missingBaseline = BASELINE.filter((s) => !required.has(s));
-    if (!hasError || missingBaseline.length > 0) {
-      const gaps = [...missingBaseline, ...(hasError ? [] : ["error.*"])];
+    const missingBaseline = BASELINE.filter((s) => !required.has(s) && !exempted.has(s));
+    const missingError = !hasError && !errorExempt;
+    if (missingBaseline.length > 0 || missingError) {
+      const gaps = [...missingBaseline, ...(missingError ? ["error.*"] : [])];
       findings.push({
         critic: CRITIC,
+        code: "happy-path-contract",
         severity: "warning",
         screen: screen.id,
         message: `Screen "${screen.id}" contract looks happy-path-only. Missing baseline states: ${gaps.join(", ")}.`,
-        fix: `Consider adding ${gaps.join(", ")} to requiredStates — production screens need them.`,
+        fix: `Add ${gaps.join(", ")} to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply.`,
       });
     }
   }

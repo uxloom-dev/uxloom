@@ -1,0 +1,70 @@
+{
+  "findings": [
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "SignupScreen",
+      "message": "Screen \"SignupScreen\" contract looks happy-path-only. Missing baseline states: loading, empty, error.*.",
+      "fix": "Add loading, empty, error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "VerifyEmailScreen",
+      "message": "Screen \"VerifyEmailScreen\" contract looks happy-path-only. Missing baseline states: loading, empty, error.*.",
+      "fix": "Add loading, empty, error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "WorkspaceScreen",
+      "message": "Screen \"WorkspaceScreen\" contract looks happy-path-only. Missing baseline states: loading, empty, error.*.",
+      "fix": "Add loading, empty, error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "InviteScreen",
+      "message": "Screen \"InviteScreen\" contract looks happy-path-only. Missing baseline states: loading, empty, error.*.",
+      "fix": "Add loading, empty, error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "state-coverage",
+      "code": "happy-path-contract",
+      "severity": "warning",
+      "screen": "DashboardScreen",
+      "message": "Screen \"DashboardScreen\" contract looks happy-path-only. Missing baseline states: loading, empty, error.*.",
+      "fix": "Add loading, empty, error.* to requiredStates, or declare an exemption with a written reason if a state genuinely cannot apply."
+    },
+    {
+      "critic": "wcag-contrast",
+      "severity": "error",
+      "screen": "SignupScreen",
+      "component": "Button.Secondary",
+      "message": "\"Button.Secondary\" on screen \"SignupScreen\" has contrast 2.43:1 (#9CA3AF on #F9FAFB) — below WCAG AA 4.5:1 for normal text.",
+      "fix": "Darken/lighten one side until the ratio reaches 4.5:1."
+    },
+    {
+      "critic": "text-expansion",
+      "severity": "warning",
+      "screen": "SignupScreen",
+      "component": "Button.Primary",
+      "message": "Label \"Create your free account\" (signup.cta) is 24 chars; at ×1.4 localization expansion it projects to 34, over the layout budget of 22. German will break this.",
+      "fix": "Shorten the English source, or widen the layout budget to ≥ 34 chars."
+    }
+  ],
+  "summary": {
+    "errors": 1,
+    "warnings": 6,
+    "journeys": 1,
+    "screens": 5,
+    "stateCoverage": {
+      "designed": 5,
+      "required": 5
+    }
+  }
+}

@@ -13,8 +13,11 @@ agent) design; UXLoom is the critic that keeps you honest.
 1. **Never design a screen outside a journey.** Every screen exists because a
    journey state needs it. Define the journey first.
 2. **The happy path is the minority of the work.** Every screen's contract
-   (requiredStates) must include empty, loading, and error states unless there
-   is a written reason it can't have them.
+   (requiredStates) must include empty, loading, and error states — or carry
+   an `exemptions` entry with a written reason when a state genuinely cannot
+   apply (e.g. a confirmation screen has no empty state; use
+   `{ "state": "error.any", "reason": "..." }` to exempt the error family).
+   Never leave a baseline state both missing and unexplained.
 3. **Iterate until zero errors.** project_validate findings are not
    suggestions; fix and re-run until `errors: 0`.
 4. **Answer the brief yourself first.** brief_start returns questions — fill
