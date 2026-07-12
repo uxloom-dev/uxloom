@@ -12,12 +12,17 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
-const serverPath = join(root, "packages/mcp-server/dist/index.js");
+const serverPath = join(root, "packages/mcp-server/dist/cli.js");
 
 async function runPhase(name, phase, def) {
   const dir = join(root, "examples", name);
   mkdirSync(dir, { recursive: true });
-  const projectFile = join(dir, "uxloom.project.json");
+  // Keep both phases on disk: the generated file is the demo input for
+  // `uxloom check`; the canonical file is the repaired, clean version.
+  const projectFile = join(
+    dir,
+    phase === "generated" ? "uxloom.generated.project.json" : "uxloom.project.json",
+  );
 
   const transport = new StdioClientTransport({
     command: "node",

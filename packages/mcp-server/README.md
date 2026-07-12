@@ -21,6 +21,15 @@ The design lives in `uxloom.project.json` in your workspace — plain JSON,
 diffable, versioned in git next to the code it specifies. Override the path
 with the `UXLOOM_PROJECT` environment variable.
 
+## CLI
+
+```bash
+npx uxloom check [file]   # validate a JourneyGraph project; exit 1 on errors
+```
+
+Colored findings with concrete fixes — drop it in CI so a happy-path-only
+design can never merge.
+
 ## Tools
 
 | Tool | Purpose |

@@ -1,0 +1,119 @@
+{
+  "name": "ridenow",
+  "formatVersion": "0.1",
+  "platforms": [
+    "ios",
+    "android"
+  ],
+  "journeys": [
+    {
+      "id": "book-ride",
+      "goal": "Rider books and completes a trip",
+      "entry": "search",
+      "states": {
+        "search": {
+          "screen": "SearchScreen",
+          "on": {
+            "DEST_SET": "select"
+          }
+        },
+        "select": {
+          "screen": "SelectRideScreen",
+          "on": {
+            "RIDE_CHOSEN": "pickup"
+          }
+        },
+        "pickup": {
+          "screen": "PickupScreen",
+          "on": {
+            "CONFIRM": "tracking"
+          }
+        },
+        "tracking": {
+          "screen": "TrackingScreen",
+          "on": {
+            "ARRIVED": "complete"
+          }
+        },
+        "complete": {
+          "screen": "CompleteScreen",
+          "final": true
+        },
+        "schedule": {
+          "screen": "ScheduleScreen",
+          "on": {
+            "SCHEDULED": "complete"
+          }
+        }
+      }
+    }
+  ],
+  "screens": [
+    {
+      "id": "SearchScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ],
+      "components": [
+        {
+          "semantic": "Button.Icon",
+          "label": {
+            "key": "search.locate",
+            "en": "Use my current location",
+            "maxChars": 20
+          },
+          "minTargetPx": 36,
+          "interactive": true
+        }
+      ]
+    },
+    {
+      "id": "SelectRideScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    },
+    {
+      "id": "PickupScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    },
+    {
+      "id": "TrackingScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    },
+    {
+      "id": "CompleteScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    },
+    {
+      "id": "ScheduleScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    }
+  ]
+}

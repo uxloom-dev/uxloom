@@ -1,0 +1,113 @@
+{
+  "name": "shopmweb",
+  "formatVersion": "0.1",
+  "platforms": [
+    "mweb",
+    "android"
+  ],
+  "journeys": [
+    {
+      "id": "checkout",
+      "goal": "Returning shopper completes purchase in under 90 seconds",
+      "entry": "cart",
+      "states": {
+        "cart": {
+          "screen": "CartScreen",
+          "on": {
+            "CHECKOUT": "address"
+          }
+        },
+        "address": {
+          "screen": "AddressScreen",
+          "on": {
+            "CONTINUE": "payment"
+          }
+        },
+        "payment": {
+          "screen": "PaymentScreen",
+          "on": {
+            "PAY": "confirm"
+          }
+        },
+        "confirm": {
+          "screen": "ConfirmScreen",
+          "final": true
+        },
+        "promo": {
+          "screen": "PromoScreen",
+          "on": {
+            "APPLY": "cart"
+          }
+        }
+      }
+    }
+  ],
+  "screens": [
+    {
+      "id": "CartScreen",
+      "intent": "Review items, reach checkout in one action",
+      "requiredStates": [
+        "default",
+        "empty",
+        "loading"
+      ],
+      "designedStates": [
+        "default"
+      ],
+      "components": [
+        {
+          "semantic": "Button.Primary",
+          "label": {
+            "key": "cart.checkout",
+            "en": "Proceed to secure checkout",
+            "maxChars": 24
+          },
+          "fg": "#8A8F98",
+          "bg": "#F4F4F4",
+          "minTargetPx": 40,
+          "interactive": true
+        }
+      ]
+    },
+    {
+      "id": "AddressScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    },
+    {
+      "id": "PaymentScreen",
+      "intent": "Collect payment with minimum anxiety",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.declined",
+        "error.network"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    },
+    {
+      "id": "ConfirmScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    },
+    {
+      "id": "PromoScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    }
+  ]
+}

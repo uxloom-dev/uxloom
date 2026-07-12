@@ -12,7 +12,9 @@ targets, and labels that will overflow under localization.
 Agent-native by design: the interface is an MCP server (works with Claude
 Code, Codex, and any MCP client), with Agent Skills included.
 
-**Website:** [uxloom.dev](https://uxloom.dev) · **npm:** [`uxloom`](https://www.npmjs.com/package/uxloom)
+**Website:** [uxloom.dev](https://uxloom.dev) · **npm:** [`uxloom`](https://www.npmjs.com/package/uxloom) · **MCP registry:** `io.github.uxloom-dev/uxloom`
+
+![uxloom check finding 9 errors in a generated checkout flow, then passing the repaired one](docs/demo.gif)
 
 ## Packages
 
@@ -34,6 +36,19 @@ codex mcp add uxloom -- npx -y uxloom
 
 The project file (`uxloom.project.json`) lives in your workspace and belongs
 in git — the design is data, versioned next to the code it specifies.
+
+## Quick start (humans & CI)
+
+```bash
+npx uxloom check                        # validates ./uxloom.project.json
+npx uxloom check path/to/project.json   # exit 1 on errors — CI-ready
+```
+
+Add it to CI and a happy-path-only design can never merge:
+
+```yaml
+- run: npx uxloom check design/uxloom.project.json
+```
 
 Workflow (also shipped as a skill in `packages/mcp-server/skills/`):
 `project_init` → `brief_start`/`brief_answer` → `journey_define` →
