@@ -40,6 +40,25 @@ Workflow (also shipped as a skill in `packages/mcp-server/skills/`):
 `screen_register` → `project_validate` → fix → repeat until zero errors →
 `coverage_report`.
 
+## Does it actually catch things?
+
+`tools/dogfood.mjs` drives the real MCP server through three products, twice
+each: screens as a happy-path generator hands them over, then repaired using
+the validation report. Artifacts in [`examples/`](examples/).
+
+| Product | Generated (happy-path) | Repaired |
+|---|---|---|
+| `shopmweb` — e-commerce checkout (mWeb + Android) | 9 errors, 6 warnings | 0 / 0 |
+| `taskflow` — SaaS signup/onboarding (web) | 1 error, 6 warnings | 0 / 0 |
+| `ridenow` — ride booking (iOS + Android, offline-heavy) | 3 errors, 7 warnings | 0 / 0 |
+
+Caught: an unreachable promo screen, dead-end verification states, five
+undesigned payment/error states, a 2.4:1 contrast button, a 40px touch target
+on Android, a checkout label that breaks in German, and three products' worth
+of missing offline states. Zero errors *and zero warnings* is reachable
+honestly — screens declare documented `exemptions` where a baseline state
+genuinely cannot apply, and contradictory exemptions are flagged.
+
 ## Development
 
 ```bash

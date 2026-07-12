@@ -2,6 +2,13 @@
   "name": "@uxloom/critics",
   "version": "0.1.0",
   "description": "Design critics for JourneyGraph projects: journey completeness, state coverage, WCAG contrast, touch targets, text expansion.",
+  "homepage": "https://uxloom.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uxloom-dev/uxloom.git",
+    "directory": "packages/critics"
+  },
+  "keywords": ["design", "ux", "accessibility", "wcag", "user-journey", "design-qa", "lint"],
   "license": "MIT",
   "author": "Divyaman <divyaman777@gmail.com>",
   "type": "module",

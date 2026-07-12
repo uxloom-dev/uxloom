@@ -2,6 +2,13 @@
   "name": "@uxloom/journeygraph",
   "version": "0.1.0",
   "description": "JourneyGraph — an open design-as-data format. User journeys as state machines, screens as nodes with required states.",
+  "homepage": "https://uxloom.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uxloom-dev/uxloom.git",
+    "directory": "packages/journeygraph"
+  },
+  "keywords": ["design", "ux", "user-journey", "state-machine", "design-to-code", "schema"],
   "license": "MIT",
   "author": "Divyaman <divyaman777@gmail.com>",
   "type": "module",
