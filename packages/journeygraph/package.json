@@ -1,0 +1,22 @@
+{
+  "name": "@uxloom/journeygraph",
+  "version": "0.1.0",
+  "description": "JourneyGraph — an open design-as-data format. User journeys as state machines, screens as nodes with required states.",
+  "license": "MIT",
+  "author": "Divyaman <divyaman777@gmail.com>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

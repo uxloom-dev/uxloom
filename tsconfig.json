@@ -1,0 +1,8 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/journeygraph" },
+    { "path": "packages/critics" },
+    { "path": "packages/mcp-server" }
+  ]
+}

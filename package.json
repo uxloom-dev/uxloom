@@ -1,26 +1,24 @@
 {
-  "name": "uxloom",
-  "version": "0.0.1",
-  "description": "UXLoom — agent-native UI/UX design tooling. Journey-graph validation and design critics for AI agents, via MCP. Full release in development.",
-  "keywords": [
-    "mcp",
-    "mcp-server",
-    "design",
-    "ui",
-    "ux",
-    "user-journey",
-    "design-to-code",
-    "accessibility",
-    "ai-agent"
-  ],
-  "homepage": "https://uxloom.dev",
+  "name": "uxloom-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "UXLoom monorepo — agent-native UI/UX design validation. Journey graphs, design critics, MCP server.",
   "license": "MIT",
   "author": "Divyaman <divyaman777@gmail.com>",
-  "files": [
-    "README.md",
-    "LICENSE"
+  "workspaces": [
+    "packages/*"
   ],
-  "publishConfig": {
-    "access": "public"
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "vitest run",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

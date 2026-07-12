@@ -1,0 +1,48 @@
+{
+  "name": "uxloom",
+  "version": "0.1.0",
+  "description": "UXLoom — agent-native UI/UX design validation via MCP. Your generator gave you 6 screens; UXLoom proves you're missing 9 states.",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "design",
+    "ui",
+    "ux",
+    "user-journey",
+    "design-to-code",
+    "accessibility",
+    "ai-agent"
+  ],
+  "homepage": "https://uxloom.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/uxloom-dev/uxloom.git"
+  },
+  "license": "MIT",
+  "author": "Divyaman <divyaman777@gmail.com>",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "uxloom": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "skills"
+  ],
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@uxloom/critics": "0.1.0",
+    "@uxloom/journeygraph": "0.1.0",
+    "zod": "^3.23.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

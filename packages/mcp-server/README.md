@@ -1,0 +1,43 @@
+# uxloom
+
+**Agent-native UI/UX design validation via MCP.**
+
+Your generator gave you 6 screens. UXLoom proves you're missing 9 states —
+unreachable screens, dead ends, missing error/empty/loading states, WCAG
+contrast failures, undersized touch targets, and labels that break under
+localization. All before a line of production code exists.
+
+## Install
+
+```bash
+# Claude Code
+claude mcp add uxloom -- npx -y uxloom
+
+# Codex CLI
+codex mcp add uxloom -- npx -y uxloom
+```
+
+The design lives in `uxloom.project.json` in your workspace — plain JSON,
+diffable, versioned in git next to the code it specifies. Override the path
+with the `UXLOOM_PROJECT` environment variable.
+
+## Tools
+
+| Tool | Purpose |
+|---|---|
+| `project_init` | Create the project file (name + platforms) |
+| `brief_start` / `brief_answer` | Structured design brief: the agent answers from context, only taste questions escalate to the human, assumptions are logged |
+| `journey_define` | Add a journey — a state machine whose states reference screens |
+| `screen_register` | Add a screen: intent, required states (contract), designed states (progress), components |
+| `project_validate` | Run every critic; iterate until zero errors |
+| `screen_critique` | Findings scoped to one screen |
+| `coverage_report` | Screens delivered vs. states the journeys need |
+
+## Skills
+
+An Agent Skill encoding the journey-first workflow ships in `skills/uxloom/`
+— copy it to `.claude/skills/` (Claude Code) or `.agents/skills/` (Codex).
+
+Docs and source: [github.com/uxloom-dev/uxloom](https://github.com/uxloom-dev/uxloom) · [uxloom.dev](https://uxloom.dev)
+
+MIT licensed.
