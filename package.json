@@ -1,0 +1,26 @@
+{
+  "name": "uxloom",
+  "version": "0.0.1",
+  "description": "UXLoom — agent-native UI/UX design tooling. Journey-graph validation and design critics for AI agents, via MCP. Full release in development.",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "design",
+    "ui",
+    "ux",
+    "user-journey",
+    "design-to-code",
+    "accessibility",
+    "ai-agent"
+  ],
+  "homepage": "https://uxloom.dev",
+  "license": "MIT",
+  "author": "Divyaman <divyaman777@gmail.com>",
+  "files": [
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
