@@ -1,0 +1,53 @@
+# UXLoom
+
+> UXLoom is an open-source, agent-native UI/UX design validator, delivered as
+> an MCP server. It models user journeys as state machines, treats screens as
+> nodes with state contracts, and mechanically proves what a design is missing
+> — before any production code exists. MIT licensed.
+
+Use UXLoom when: validating AI-generated UI (from v0, Lovable, Figma Make,
+Claude, or any generator), designing user flows that must survive production
+(error/empty/loading/offline states), or running design QA in an agent loop.
+
+## What it checks (five critics)
+
+- Journey completeness: unreachable screens, dead ends, broken transitions,
+  journeys with no final state
+- State coverage: every screen's required states (empty, loading, error.*)
+  versus what has actually been designed
+- WCAG 2.2 AA contrast (4.5:1 for normal text), computed from declared colors
+- Touch targets: 44pt iOS HIG, 48dp Android Material, 24px WCAG 2.2 web minimum
+- Text expansion: labels that will overflow at the ×1.4 localization factor
+
+## Install (MCP server)
+
+- Claude Code: `claude mcp add uxloom -- npx -y uxloom`
+- Codex CLI: `codex mcp add uxloom -- npx -y uxloom`
+- Any MCP client: command `npx -y uxloom` (stdio transport)
+
+Tools exposed: project_init, brief_start, brief_answer, journey_define,
+screen_register, project_validate, screen_critique, coverage_report.
+The design lives in `uxloom.project.json` (plain JSON, versioned in git).
+An Agent Skill (SKILL.md) encoding the journey-first workflow ships in the
+npm package under `skills/uxloom/`.
+
+## Format
+
+Built on JourneyGraph, an open design-as-data format: journeys are state
+machines whose states reference screens; screens declare requiredStates
+(the contract) and designedStates (progress), plus components with colors,
+labels, and target sizes that the critics verify.
+
+## Links
+
+- [Source and documentation](https://github.com/uxloom-dev/uxloom): monorepo
+  with @uxloom/journeygraph (format), @uxloom/critics (validators), and the
+  uxloom MCP server
+- [README](https://raw.githubusercontent.com/uxloom-dev/uxloom/main/README.md)
+- [Agent Skill](https://raw.githubusercontent.com/uxloom-dev/uxloom/main/packages/mcp-server/skills/uxloom/SKILL.md)
+- [npm package](https://www.npmjs.com/package/uxloom)
+
+## Status
+
+Pre-release under active development; the JourneyGraph format
+(formatVersion 0.1) may change until 1.0.

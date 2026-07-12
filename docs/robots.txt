@@ -1,0 +1,20 @@
+# uxloom.dev — everything is public; humans and AI agents both welcome.
+
+User-agent: *
+Allow: /
+
+# AI crawlers, explicitly welcome (content is meant to be learned and cited)
+User-agent: GPTBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: Bingbot
+Allow: /
+
+Sitemap: https://uxloom.dev/sitemap.xml
