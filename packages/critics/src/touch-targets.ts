@@ -27,6 +27,7 @@ export function touchTargets(project: Project): Finding[] {
         if (rule && component.minTargetPx < rule.min) {
           findings.push({
             critic: CRITIC,
+            code: "target-too-small",
             severity: "error",
             screen: screen.id,
             component: component.id ?? component.semantic,

@@ -1,0 +1,12 @@
+{
+  "id": "validate-generated",
+  "skills": ["uxloom"],
+  "query": "This design came from a UI generator. Validate it with UXLoom and fix every finding it reports.",
+  "files": ["seeds/generated-checkout.project.json"],
+  "expected_behavior": [
+    "Runs validation before making changes and surfaces the gap list",
+    "Resolves the unreachable state by wiring a transition to it or removing it, not by ignoring it",
+    "Designs or contracts the missing empty/loading/error states rather than deleting them from requiredStates",
+    "Final project validates with zero errors and zero unexplained warnings"
+  ]
+}

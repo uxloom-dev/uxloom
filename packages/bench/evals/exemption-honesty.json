@@ -1,0 +1,12 @@
+{
+  "id": "exemption-honesty",
+  "skills": ["uxloom"],
+  "query": "Validation shows warnings on the confirmation screen of this project. Resolve them honestly.",
+  "files": ["seeds/confirmation-warnings.project.json"],
+  "expected_behavior": [
+    "Recognizes that a terminal confirmation screen cannot have an empty state",
+    "Declares an exemption with a written reason instead of padding the contract with meaningless states",
+    "Does not weaken any other screen's contract to silence warnings",
+    "Final project validates with zero errors and zero happy-path warnings"
+  ]
+}

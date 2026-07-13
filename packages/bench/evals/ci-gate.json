@@ -1,0 +1,11 @@
+{
+  "id": "ci-gate",
+  "skills": ["uxloom"],
+  "query": "Add UXLoom as a CI gate for this repository so a design with validation errors can never merge.",
+  "files": ["seeds/generated-checkout.project.json"],
+  "expected_behavior": [
+    "Creates a CI workflow that runs npx uxloom check against the project file",
+    "The gate relies on the CLI exit code, not on parsing output text",
+    "Points the check at the correct project file path"
+  ]
+}

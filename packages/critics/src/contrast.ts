@@ -41,6 +41,7 @@ export function wcagContrast(project: Project): Finding[] {
       if (ratio < AA_NORMAL) {
         findings.push({
           critic: CRITIC,
+          code: "contrast-below-aa",
           severity: "error",
           screen: screen.id,
           component: component.id ?? component.semantic,

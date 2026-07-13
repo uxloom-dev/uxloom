@@ -24,6 +24,7 @@ export function stateCoverage(project: Project): Finding[] {
       if (!designed.has(state)) {
         findings.push({
           critic: CRITIC,
+          code: "state-undesigned",
           severity: "error",
           screen: screen.id,
           state,
@@ -37,6 +38,7 @@ export function stateCoverage(project: Project): Finding[] {
       if (!required.has(state)) {
         findings.push({
           critic: CRITIC,
+          code: "contract-drift",
           severity: "warning",
           screen: screen.id,
           state,

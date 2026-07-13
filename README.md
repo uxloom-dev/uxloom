@@ -12,6 +12,11 @@ targets, and labels that will overflow under localization.
 Agent-native by design: the interface is an MCP server (works with Claude
 Code, Codex, and any MCP client), with Agent Skills included.
 
+**Deterministic by design**: same input, byte-identical report — benchmarked
+([`packages/bench`](packages/bench)) at 1.000 precision/recall on a seeded
+defect catalog, SHA-256-stable across processes, 1000 screens in under 5ms.
+That's what lets design completeness gate CI, where an LLM opinion can't.
+
 **Website:** [uxloom.dev](https://uxloom.dev) · **npm:** [`uxloom`](https://www.npmjs.com/package/uxloom) · **MCP registry:** `io.github.uxloom-dev/uxloom`
 
 ![uxloom check finding 9 errors in a generated checkout flow, then passing the repaired one](docs/demo.gif)

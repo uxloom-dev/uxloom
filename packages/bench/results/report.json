@@ -1,0 +1,288 @@
+{
+  "generatedBy": "uxloom bench",
+  "grades": {
+    "correctness": "A",
+    "determinism": "A",
+    "performance": "A",
+    "robustness": "A"
+  },
+  "correctness": {
+    "overall": {
+      "tp": 34,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1,
+      "recall": 1,
+      "f1": 1
+    },
+    "byCode": {
+      "unreachable": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "dead-end": {
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "no-final-state": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "target-missing": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "screen-missing": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "target-state-missing": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "state-undesigned": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "contract-drift": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "happy-path-contract": {
+        "tp": 1,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "contradictory-exemption": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "contrast-below-aa": {
+        "tp": 4,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "target-too-small": {
+        "tp": 2,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      },
+      "label-overflow": {
+        "tp": 3,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1,
+        "recall": 1
+      }
+    },
+    "caseResults": [
+      {
+        "id": "iso-unreachable",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-dead-end",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-no-final-state",
+        "planted": 2,
+        "found": 2,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-target-missing",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-screen-missing",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-target-state-missing",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-state-undesigned",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-contract-drift",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-happy-path-contract",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-contradictory-exemption",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-contrast-below-aa",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-target-too-small",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "iso-label-overflow",
+        "planted": 1,
+        "found": 1,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "compound-0",
+        "planted": 4,
+        "found": 4,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "compound-1",
+        "planted": 4,
+        "found": 4,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "compound-2",
+        "planted": 4,
+        "found": 4,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "compound-3",
+        "planted": 4,
+        "found": 4,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "compound-4",
+        "planted": 4,
+        "found": 4,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "clean-5",
+        "planted": 0,
+        "found": 0,
+        "falsePositives": [],
+        "missed": []
+      },
+      {
+        "id": "clean-25",
+        "planted": 0,
+        "found": 0,
+        "falsePositives": [],
+        "missed": []
+      }
+    ]
+  },
+  "determinism": {
+    "inProcessRuns": 25,
+    "inProcessUniqueHashes": 1,
+    "crossProcessUniqueHashes": 1,
+    "deterministic": true
+  },
+  "perf": {
+    "scaling": [
+      {
+        "screens": 10,
+        "medianMs": 0.016542
+      },
+      {
+        "screens": 100,
+        "medianMs": 0.176541
+      },
+      {
+        "screens": 500,
+        "medianMs": 1.178167
+      },
+      {
+        "screens": 1000,
+        "medianMs": 3.739667
+      }
+    ],
+    "cliColdStartMedianMs": 68.362209
+  },
+  "fuzz": {
+    "iterations": 500,
+    "accepted": 76,
+    "rejectedCleanly": 424,
+    "crashes": 0,
+    "crashSamples": []
+  }
+}

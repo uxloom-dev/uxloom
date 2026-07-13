@@ -24,6 +24,7 @@ export function textExpansion(project: Project): Finding[] {
       if (projected > label.maxChars) {
         findings.push({
           critic: CRITIC,
+          code: "label-overflow",
           severity: "warning",
           screen: screen.id,
           component: component.id ?? component.semantic,

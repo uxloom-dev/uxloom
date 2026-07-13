@@ -21,6 +21,7 @@ export function journeyCompleteness(project: Project): Finding[] {
     if (!journey.states[journey.entry]) {
       findings.push({
         critic: CRITIC,
+        code: "entry-missing",
         severity: "error",
         journey: journey.id,
         message: `Entry state "${journey.entry}" is not defined in journey "${journey.id}".`,
@@ -38,6 +39,7 @@ export function journeyCompleteness(project: Project): Finding[] {
       if (!screen) {
         findings.push({
           critic: CRITIC,
+          code: "screen-missing",
           severity: "error",
           journey: journey.id,
           state: stateId,
@@ -52,6 +54,7 @@ export function journeyCompleteness(project: Project): Finding[] {
         if (!resolved) {
           findings.push({
             critic: CRITIC,
+            code: "target-missing",
             severity: "error",
             journey: journey.id,
             state: stateId,
@@ -65,6 +68,7 @@ export function journeyCompleteness(project: Project): Finding[] {
           if (targetScreen && !targetScreen.requiredStates.includes(screenState)) {
             findings.push({
               critic: CRITIC,
+              code: "target-state-missing",
               severity: "error",
               journey: journey.id,
               state: stateId,
@@ -79,6 +83,7 @@ export function journeyCompleteness(project: Project): Finding[] {
       if (!state.final && Object.keys(state.on ?? {}).length === 0) {
         findings.push({
           critic: CRITIC,
+          code: "dead-end",
           severity: "error",
           journey: journey.id,
           state: stateId,
@@ -107,6 +112,7 @@ export function journeyCompleteness(project: Project): Finding[] {
       if (!reachable.has(stateId)) {
         findings.push({
           critic: CRITIC,
+          code: "unreachable",
           severity: "error",
           journey: journey.id,
           state: stateId,
@@ -119,6 +125,7 @@ export function journeyCompleteness(project: Project): Finding[] {
     if (!hasFinal) {
       findings.push({
         critic: CRITIC,
+        code: "no-final-state",
         severity: "error",
         journey: journey.id,
         message: `Journey "${journey.id}" has no final state — it can never complete.`,

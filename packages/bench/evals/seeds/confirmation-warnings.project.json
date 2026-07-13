@@ -1,0 +1,79 @@
+{
+  "name": "orderapp",
+  "formatVersion": "0.1",
+  "platforms": [
+    "mweb"
+  ],
+  "journeys": [
+    {
+      "id": "order",
+      "entry": "cart",
+      "states": {
+        "cart": {
+          "screen": "CartScreen",
+          "on": {
+            "CHECKOUT": "pay",
+            "CART_EMPTY": "cart#empty"
+          }
+        },
+        "pay": {
+          "screen": "PayScreen",
+          "on": {
+            "PAID": "confirm",
+            "DECLINED": "pay#error.declined",
+            "BACK": "cart"
+          }
+        },
+        "confirm": {
+          "screen": "ConfirmScreen",
+          "final": true
+        }
+      }
+    }
+  ],
+  "screens": [
+    {
+      "id": "CartScreen",
+      "requiredStates": [
+        "default",
+        "empty",
+        "loading",
+        "error.network"
+      ],
+      "designedStates": [
+        "default",
+        "empty",
+        "loading",
+        "error.network"
+      ]
+    },
+    {
+      "id": "PayScreen",
+      "requiredStates": [
+        "default",
+        "loading",
+        "error.declined"
+      ],
+      "designedStates": [
+        "default",
+        "loading",
+        "error.declined"
+      ],
+      "exemptions": [
+        {
+          "state": "empty",
+          "reason": "Payment form has no data-list to be empty."
+        }
+      ]
+    },
+    {
+      "id": "ConfirmScreen",
+      "requiredStates": [
+        "default"
+      ],
+      "designedStates": [
+        "default"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "design-from-prompt",
+  "skills": ["uxloom"],
+  "query": "Design the user journeys and screens for a simple note-taking web app (create, edit, search, delete notes) using UXLoom. Iterate until validation is clean.",
+  "files": [],
+  "expected_behavior": [
+    "Initializes a UXLoom project and produces a uxloom.project.json file",
+    "Defines at least one journey with an entry state and at least one final state",
+    "Every non-final journey state has outgoing events, including at least one failure or back path",
+    "Every screen contract includes empty, loading, and error states, or carries a written exemption",
+    "Final project validates with zero errors"
+  ]
+}

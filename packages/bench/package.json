@@ -1,0 +1,15 @@
+{
+  "name": "@uxloom/bench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Benchmark harness for UXLoom: critic precision/recall against seeded defects, determinism, performance scaling, fuzz robustness, and skill evals.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "bench": "node src/run.mjs"
+  },
+  "dependencies": {
+    "@uxloom/critics": "0.1.0",
+    "@uxloom/journeygraph": "0.1.0"
+  }
+}
