@@ -1,6 +1,6 @@
 {
   "name": "@uxloom/critics",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Design critics for JourneyGraph projects: journey completeness, state coverage, WCAG contrast, touch targets, text expansion.",
   "homepage": "https://uxloom.dev",
   "repository": {

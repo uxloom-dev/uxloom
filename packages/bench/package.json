@@ -6,10 +6,11 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "bench": "node src/run.mjs"
+    "bench": "node src/run.mjs",
+    "bench:baseline": "node src/run.mjs --update-baseline"
   },
   "dependencies": {
-    "@uxloom/critics": "0.1.0",
+    "@uxloom/critics": "0.1.1",
     "@uxloom/journeygraph": "0.1.0"
   }
 }

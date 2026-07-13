@@ -609,6 +609,47 @@
     </div>
   </section>
 
+  <section aria-labelledby="start-h">
+    <div class="wrap">
+      <p class="kicker">Get started</p>
+      <h2 id="start-h">Two commands to your first proof.</h2>
+      <p class="section-lede">
+        Prerequisites: Node.js 20+ and Claude Code, Codex, or any MCP client.
+        No account, no API key.
+      </p>
+      <ol class="start-steps">
+        <li>
+          <strong>Connect UXLoom</strong> — in your project directory:
+          <code>claude mcp add uxloom -- npx -y uxloom</code>
+        </li>
+        <li>
+          <strong>Ask your agent for a design</strong> — e.g. “Design the user
+          journeys and screens for a habit-tracking app using UXLoom. Iterate
+          until validation is clean.” Only taste questions reach you; the
+          design lands in <code>uxloom.project.json</code> — commit it.
+        </li>
+        <li>
+          <strong>Gate it forever</strong> — <code>npx uxloom check</code>
+          exits 1 on errors, in your terminal or in CI.
+        </li>
+      </ol>
+      <img class="start-gif" src="getting-started.gif" width="1100" height="640"
+           alt="Terminal recording: connecting UXLoom to Claude Code, then uxloom check reporting 9 errors on a generated design"
+           loading="lazy">
+      <p class="section-lede" style="margin-top:18px">
+        Full walkthrough, Codex setup, and troubleshooting:
+        <a href="https://github.com/uxloom-dev/uxloom/blob/main/QUICKSTART.md">QUICKSTART.md</a>
+      </p>
+    </div>
+  </section>
+  <style>
+    .start-steps { margin: 36px 0 32px; padding-left: 1.4rem; display: grid; gap: 16px; max-width: 760px; }
+    .start-steps li { color: var(--text-dim); line-height: 1.6; }
+    .start-steps strong { color: var(--text); }
+    .start-steps code { font-family: var(--mono); font-size: 0.88em; color: var(--thread-2); background: var(--ink-2); padding: 2px 7px; border-radius: 6px; }
+    .start-gif { max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line); }
+  </style>
+
   <section aria-labelledby="faq-h">
     <div class="wrap">
       <p class="kicker">Questions</p>

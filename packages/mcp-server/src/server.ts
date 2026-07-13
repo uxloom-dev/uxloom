@@ -16,7 +16,7 @@ function json(data: unknown) {
 }
 
 export function createServer(store = new ProjectStore()): McpServer {
-  const server = new McpServer({ name: "uxloom", version: "0.1.2" });
+  const server = new McpServer({ name: "uxloom", version: "0.1.3" });
 
   server.tool(
     "project_init",

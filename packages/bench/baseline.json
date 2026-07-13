@@ -1,0 +1,8 @@
+{
+  "grades": {
+    "correctness": "A",
+    "determinism": "A",
+    "performance": "A",
+    "robustness": "A"
+  }
+}

@@ -29,6 +29,11 @@ That's what lets design completeness gate CI, where an LLM opinion can't.
 | [`@uxloom/critics`](packages/critics) | The validators: journey completeness, state coverage, WCAG contrast, touch targets, text expansion |
 | [`uxloom`](packages/mcp-server) | The MCP server + Agent Skills — the interface agents use |
 
+**New here? Start with the [Quickstart](QUICKSTART.md)** — prerequisites,
+the Claude Code walkthrough, what to say to your agent, and troubleshooting.
+
+![Connecting UXLoom to Claude Code and running the first check](docs/getting-started.gif)
+
 ## Quick start (agents)
 
 ```bash

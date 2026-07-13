@@ -2,7 +2,7 @@
  * UXLoom benchmark: run every suite, grade every dimension, write the
  * scorecard. Usage: node src/run.mjs (from packages/bench).
  */
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildGoldenSet, mulberry32 } from "./generate.mjs";
@@ -43,6 +43,26 @@ const grades = {
   robustness: fuzz.crashes === 0 ? "A" : "F",
 };
 console.log(`\ngrades: ${Object.entries(grades).map(([k, v]) => `${k}=${v}`).join("  ")}`);
+
+// ---- regression gate against the committed baseline ----------------------
+const RANK = { A: 4, B: 3, C: 2, F: 0 };
+const baselinePath = join(dirname(fileURLToPath(import.meta.url)), "..", "baseline.json");
+const updateBaseline = process.argv.includes("--update-baseline");
+if (updateBaseline) {
+  writeFileSync(baselinePath, JSON.stringify({ grades }, null, 2) + "\n");
+  console.log("baseline updated");
+} else if (existsSync(baselinePath)) {
+  const baseline = JSON.parse(readFileSync(baselinePath, "utf8")).grades;
+  const regressions = Object.entries(baseline)
+    .filter(([dim, grade]) => RANK[grades[dim] ?? "F"] < RANK[grade])
+    .map(([dim, grade]) => `${dim}: ${grade} → ${grades[dim]}`);
+  if (regressions.length) {
+    console.error(`\nREGRESSION vs baseline: ${regressions.join(", ")}`);
+    console.error("If intentional, re-baseline with: node src/run.mjs --update-baseline");
+    process.exit(1);
+  }
+  console.log("no regression vs committed baseline");
+}
 
 // ---- report --------------------------------------------------------------
 const report = { generatedBy: "uxloom bench", grades, correctness, determinism, perf, fuzz };
