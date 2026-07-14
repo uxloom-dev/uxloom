@@ -4,7 +4,7 @@
 |---|---|---|
 | Critic correctness | **A** | precision 1.000, recall 1.000, F1 1.000 over 20 golden cases (34 planted defects) |
 | Determinism | **A** | 25 in-process runs + 2 fresh processes → 1 unique report hash |
-| Performance | **A** | 10 screens: 0.0ms · 100 screens: 0.2ms · 500 screens: 1.2ms · 1000 screens: 3.9ms · CLI cold start 64ms |
+| Performance | **A** | 10 screens: 0.0ms · 100 screens: 0.2ms · 500 screens: 1.2ms · 1000 screens: 3.9ms · CLI cold start 67ms |
 | Robustness | **A** | 500 fuzzed inputs → 0 crashes (424 rejected cleanly, 76 still-valid accepted) |
 
 ## Per-code detection

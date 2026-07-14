@@ -36,6 +36,15 @@ UXLoom Progress:
 - [ ] 6. uxloom:coverage_report → include its headline in your summary
 ```
 
+**When a PRD, spec, or design doc exists**: pass its contents as the
+`context` argument of uxloom:brief_start and extract every answer from it —
+do not re-ask the user what their documents already state.
+
+**When registering a complete design** (or converting an existing one):
+build the whole document and use uxloom:project_import in one call instead
+of many journey_define/screen_register calls. Steps 3–4 remain the right
+shape when designing incrementally.
+
 **Step 3 — journeys.** Every non-final state has outgoing events including
 failure events (`ERROR`, `OFFLINE`, `CANCEL`, `BACK`). Failure events target
 `state#error.<kind>` refs. Every journey has at least one final state.

@@ -1,11 +1,30 @@
 # JourneyGraph format reference (v0.1)
 
 ## Contents
+- Modeling conventions (screens vs states)
 - Project shape
 - Journeys and target refs
 - Screens, contracts, and components
 - Exemptions
 - Validation rules the schema enforces
+
+## Modeling conventions (screens vs states)
+
+Consistent granularity keeps designs comparable and critics meaningful:
+
+- **A screen is a destination** — a page, route, or full view a user lands on.
+- **A state is a condition of that destination** — modals, drawers, tabs,
+  panels, confirmation dialogs, and transient conditions are screen states,
+  not separate screens. Examples: `create` (a creation modal on a list
+  screen), `key.issued-once` (a shown-once panel), `remove-confirm` (a
+  typed-confirmation dialog), `identity.pending` (an auto-refreshing tab
+  condition).
+- **Dot-namespace variants**: `error.network`, `error.validation`,
+  `create.error.slug-taken` — the family prefix is what exemptions like
+  `error.any` match on.
+- **Journeys end.** Every journey needs at least one `final` state — for
+  browse/manage journeys, the state where the user's goal is satisfied is
+  final even if it has outgoing events.
 
 ## Project shape
 

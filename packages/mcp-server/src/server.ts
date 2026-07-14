@@ -4,10 +4,12 @@ import {
   JourneySchema,
   ScreenSchema,
   PlatformIdSchema,
+  ProjectSchema,
   type Journey,
+  type Project,
   type Screen,
 } from "@uxloom/journeygraph";
-import { critique, critiqueScreen } from "@uxloom/critics";
+import { critique, critiqueScreen, contrastRatio } from "@uxloom/critics";
 import { ProjectStore } from "./store.js";
 import { briefQuestions, compileBrief } from "./brief.js";
 
@@ -16,7 +18,7 @@ function json(data: unknown) {
 }
 
 export function createServer(store = new ProjectStore()): McpServer {
-  const server = new McpServer({ name: "uxloom", version: "0.1.3" });
+  const server = new McpServer({ name: "uxloom", version: "0.2.0" });
 
   server.tool(
     "project_init",
@@ -33,13 +35,20 @@ export function createServer(store = new ProjectStore()): McpServer {
 
   server.tool(
     "brief_start",
-    "Start a design brief. Returns a structured questionnaire. Answer every question you can from conversation context yourself; only relay questions marked askHuman:true to the user. Then call brief_answer.",
-    { prompt: z.string().describe("The product/design request, verbatim") },
-    async ({ prompt }) => {
+    "Start a design brief. Returns a structured questionnaire. Answer every question you can yourself — from the provided context document (PRD, spec) first, then conversation context; only relay questions marked askHuman:true to the user. Then call brief_answer.",
+    {
+      prompt: z.string().describe("The product/design request, verbatim"),
+      context: z
+        .string()
+        .optional()
+        .describe("Existing product context if any: PRD, spec, or design doc contents. When provided, extract answers from it instead of asking."),
+    },
+    async ({ prompt, context }) => {
       return json({
         resultType: "inputRequired",
-        instructions:
-          "Fill answers from conversation context. Only askHuman:true questions go to the user. Unanswered questions fall back to their default and are logged in the assumption ledger.",
+        instructions: context
+          ? "A context document was provided. Extract every answer you can from it — including askHuman questions like brand, if the document states them. Only relay to the user what the document and conversation genuinely do not answer. Unanswered questions fall back to their default and are logged in the assumption ledger."
+          : "Fill answers from conversation context. Only askHuman:true questions go to the user. Unanswered questions fall back to their default and are logged in the assumption ledger.",
         inputRequests: briefQuestions(prompt),
       });
     },
@@ -89,6 +98,67 @@ export function createServer(store = new ProjectStore()): McpServer {
       else project.screens.push(screen as Screen);
       store.save(project);
       return json({ ok: true, screens: project.screens.map((s) => s.id) });
+    },
+  );
+
+  server.tool(
+    "project_import",
+    "Replace the whole project in one call: journeys and screens together. Prefer this over many journey_define/screen_register calls when registering a complete or large design. Validates the full document; unknown fields are rejected.",
+    { project: ProjectSchema.describe("The complete JourneyGraph project document") },
+    async ({ project }) => {
+      store.save(project as Project);
+      const report = critique(project as Project);
+      return json({
+        ok: true,
+        path: store.path,
+        journeys: (project as Project).journeys.map((j) => j.id),
+        screens: (project as Project).screens.map((s) => s.id),
+        validation: report.summary,
+      });
+    },
+  );
+
+  server.tool(
+    "project_export",
+    "Return the complete current project document (for inspection, backup, or transformation before a project_import).",
+    {},
+    async () => {
+      return json(store.load());
+    },
+  );
+
+  server.tool(
+    "palette_check",
+    "Check a design system's color pairs against WCAG 2.2 AA (4.5:1) before any screens exist. Reports each pair's exact ratio, pass/fail, and thin-margin passes (under 5.0:1) that one shade lighter would break.",
+    {
+      pairs: z
+        .array(
+          z.object({
+            name: z.string().describe("Human name, e.g. 'secondary text on paper'"),
+            fg: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/),
+            bg: z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/),
+          }),
+        )
+        .min(1),
+    },
+    async ({ pairs }) => {
+      const results = pairs.map(({ name, fg, bg }) => {
+        const ratio = contrastRatio(fg, bg);
+        return {
+          name,
+          fg,
+          bg,
+          ratio: Math.round(ratio * 100) / 100,
+          passesAA: ratio >= 4.5,
+          thinMargin: ratio >= 4.5 && ratio < 5.0,
+        };
+      });
+      return json({
+        results,
+        failures: results.filter((r) => !r.passesAA).length,
+        thinMargins: results.filter((r) => r.thinMargin).length,
+        note: "Thin-margin pairs pass today but fail with minor tint/shade drift — pin them in your token system.",
+      });
     },
   );
 
