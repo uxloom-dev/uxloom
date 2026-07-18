@@ -73,6 +73,17 @@ export interface Exemption {
   reason: string;
 }
 
+/** A semantic layout block for wireframe rendering and code generation. */
+export interface Block {
+  type:
+    | "header" | "nav" | "hero" | "text" | "list" | "card" | "form"
+    | "field" | "button" | "image" | "table" | "footer" | "custom";
+  label?: string;
+  /** Repeat count for list/card rows in the wireframe (default 3). */
+  count?: number;
+  children?: Block[];
+}
+
 export interface Screen {
   id: string;
   /** One sentence: what this screen must let the user do. */
@@ -86,6 +97,8 @@ export interface Screen {
   platforms?: PlatformId[];
   /** Documented non-applicability of baseline states. */
   exemptions?: Exemption[];
+  /** Ordered semantic blocks; when absent, the preview derives a default. */
+  layout?: { blocks: Block[] };
 }
 
 export interface Project {

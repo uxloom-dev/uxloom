@@ -34,6 +34,16 @@ The design lives in `uxloom.project.json` (plain JSON, versioned in git).
 An Agent Skill (SKILL.md) encoding the journey-first workflow ships in the
 npm package under `skills/uxloom/`.
 
+## Live preview (wireframe mocks)
+
+`npx uxloom preview` serves live wireframe mocks rendered from the
+contract: every screen, every contracted state (loading skeletons, empty
+placeholders, error banners, and custom-state overlays are derived
+automatically), desktop/tablet/mobile viewports, and clickable journey
+events that walk the flows. Updates in real time as the design changes.
+Screens can declare an optional `layout` of semantic blocks; without one,
+a layout is derived from their components.
+
 ## Implementation audit (drift detection)
 
 `npx uxloom audit` verifies the code implements the contract: mark state

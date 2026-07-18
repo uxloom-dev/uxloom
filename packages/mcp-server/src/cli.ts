@@ -15,6 +15,7 @@ import { createServer } from "./server.js";
 import { runCheck } from "./check.js";
 import { runInit } from "./init.js";
 import { runAuditCli } from "./audit-cli.js";
+import { runPreview } from "./preview.js";
 import { updateNotice } from "./update-check.js";
 
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
@@ -23,12 +24,13 @@ const [, , command, arg] = process.argv;
 if (command === "--version" || command === "-v" || command === "version") {
   console.log(version);
   process.exit(0);
-} else if (command === "check" || command === "audit" || command === "init") {
-  // Nudge before the command runs (they exit the process when done).
+} else if (command === "check" || command === "audit" || command === "init" || command === "preview") {
+  // Nudge before the command runs.
   const notice = await updateNotice(version);
   if (notice) console.error(`\n▲ ${notice}\n`);
   if (command === "check") runCheck(arg);
   else if (command === "audit") runAuditCli(arg);
+  else if (command === "preview") runPreview(arg);
   else runInit();
 } else if (command === undefined) {
   const server = createServer();
@@ -45,6 +47,7 @@ if (command === "--version" || command === "-v" || command === "version") {
   console.error("       uxloom init          # set up this project (MCP config + skill + starter file)");
   console.error("       uxloom check [file]  # validate a JourneyGraph project");
   console.error("       uxloom audit [file]  # audit implementation against the contract");
+  console.error("       uxloom preview [file] # live wireframe mocks in the browser");
   console.error("       uxloom --version     # print version");
   process.exit(2);
 }

@@ -73,6 +73,17 @@ skipped. Surface the gap list to the user, then design the missing states.
 `npx uxloom check [file]` validates a project file directly — exit 1 on
 errors. Use in CI or when the MCP server is not connected.
 
+## Showing the design to the human
+
+Suggest the user runs `npx uxloom preview` in a terminal: a local page
+renders live wireframe mocks of every screen — every contracted state
+(loading skeletons, empty placeholders, error banners, custom-state
+overlays are derived automatically), every viewport, with clickable
+journey events — and updates in real time as you design. For richer
+mocks, give screens a `layout` (ordered semantic blocks: header, nav,
+hero, text, list, card, form, field, button, image, table, footer);
+screens without one auto-derive a layout from their components.
+
 ## Implementing from the contract
 
 When writing the actual UI code for a contracted screen, emit

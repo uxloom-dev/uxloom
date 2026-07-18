@@ -64,6 +64,17 @@ claude mcp add uxloom -- npx -y uxloom
 **5. Change safely.** Any future request ("add a social sharing journey")
 goes through the same loop — validation catches what the change broke.
 
+### See the design — live wireframe mocks
+
+```bash
+npx uxloom preview        # opens live mocks at http://localhost:4400
+```
+
+Every screen and every contracted state rendered as wireframes (loading
+skeletons, empty placeholders, error banners appear automatically), on
+desktop/tablet/mobile frames, with clickable journey events. Keep it open
+while your agent designs — it updates in real time.
+
 ### Verify any time, without the agent
 
 ```bash

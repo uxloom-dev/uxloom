@@ -27,6 +27,8 @@ with the `UXLOOM_PROJECT` environment variable.
 npx uxloom init           # set up any project: MCP config + skill + starter file
 npx uxloom check [file]   # design completeness; exit 1 on errors
 npx uxloom audit [file]   # implementation drift vs the contract; exit 1 on drift
+npx uxloom preview [file] # live wireframe mocks in the browser — every screen,
+                          # every state, every viewport, clickable journeys
 ```
 
 Colored findings with concrete fixes. `check` gates design completeness;

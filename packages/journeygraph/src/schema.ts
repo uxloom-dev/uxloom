@@ -32,6 +32,25 @@ export const ExemptionSchema = z.object({
   reason: z.string().min(15, "an exemption reason must be a real sentence, not a token"),
 }).strict();
 
+export const BLOCK_TYPES = [
+  "header", "nav", "hero", "text", "list", "card", "form", "field",
+  "button", "image", "table", "footer", "custom",
+] as const;
+
+const BlockBase = z.object({
+  type: z.enum(BLOCK_TYPES),
+  label: z.string().optional(),
+  /** Repeat count for list/card rows in the wireframe (default 3). */
+  count: z.number().int().min(1).max(12).optional(),
+});
+export const BlockSchema = BlockBase.extend({
+  children: z.array(BlockBase.strict()).optional(),
+}).strict();
+
+export const LayoutSchema = z.object({
+  blocks: z.array(BlockSchema).min(1),
+}).strict();
+
 export const ScreenSchema = z.object({
   id: z.string().min(1),
   intent: z.string().optional(),
@@ -40,6 +59,7 @@ export const ScreenSchema = z.object({
   components: z.array(ScreenComponentSchema).optional(),
   platforms: z.array(PlatformIdSchema).optional(),
   exemptions: z.array(ExemptionSchema).optional(),
+  layout: LayoutSchema.optional(),
 }).strict();
 
 export const JourneyStateSchema = z.object({

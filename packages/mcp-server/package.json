@@ -1,6 +1,6 @@
 {
   "name": "uxloom",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "UXLoom — agent-native UI/UX design validation via MCP. Your generator gave you 6 screens; UXLoom proves you're missing 9 states.",
   "keywords": [
     "mcp",
