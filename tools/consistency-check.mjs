@@ -81,6 +81,18 @@ for (const doc of ["README.md", "QUICKSTART.md", "packages/mcp-server/README.md"
   }
 }
 
+/* ---- 3b. capability ANNOUNCEMENT coverage -------------------------------- */
+// Truth is not enough: every shipped CLI command must be PRESENT on every
+// primary surface. A feature nobody can discover might as well not exist.
+const ANNOUNCE_SURFACES = ["README.md", "QUICKSTART.md", "docs/index.html", "docs/llms.txt", "packages/mcp-server/README.md"];
+for (const doc of ANNOUNCE_SURFACES) {
+  const text = read(doc);
+  for (const cmd of cliCommands) {
+    if (!new RegExp(`uxloom ${cmd}\\b`).test(text))
+      fail(doc, `CLI command "uxloom ${cmd}" exists but is not mentioned on this surface`, `document it (a features/quick-start line is enough)`);
+  }
+}
+
 /* ---- 4. stale-claim ban ------------------------------------------------- */
 
 // "No waitlist" is fine copy; promising one is not — ban the promise, not the word.

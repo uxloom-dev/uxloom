@@ -34,6 +34,12 @@ The design lives in `uxloom.project.json` (plain JSON, versioned in git).
 An Agent Skill (SKILL.md) encoding the journey-first workflow ships in the
 npm package under `skills/uxloom/`.
 
+## CI gates
+
+`npx uxloom check` (design completeness) and `npx uxloom audit`
+(implementation drift) both exit 1 on failure — wire them into CI so an
+incomplete design or drifted implementation can never merge.
+
 ## Live preview (wireframe mocks)
 
 `npx uxloom preview` serves live wireframe mocks rendered from the

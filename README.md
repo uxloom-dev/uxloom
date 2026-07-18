@@ -50,9 +50,13 @@ in git — the design is data, versioned next to the code it specifies.
 ## Quick start (humans & CI)
 
 ```bash
-npx uxloom check                        # validates ./uxloom.project.json
-npx uxloom check path/to/project.json   # exit 1 on errors — CI-ready
+npx uxloom init      # one-command setup: MCP config + agent skill + starter file
+npx uxloom preview   # live wireframe mocks: every screen, every state, clickable journeys
+npx uxloom check     # design completeness — exit 1 on errors, CI-ready
+npx uxloom audit     # implementation drift vs the contract — exit 1 on drift
 ```
+
+![Live preview: state tabs and clickable journey events on wireframe mocks](docs/preview-demo.gif)
 
 Add it to CI and a happy-path-only design can never merge:
 

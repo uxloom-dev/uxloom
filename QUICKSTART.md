@@ -32,12 +32,15 @@ npx uxloom check examples/shopmweb/uxloom.project.json
 
 ## Path A — design with Claude Code (the main workflow)
 
-**1. Connect UXLoom** (once per project, or use `-s user` for everywhere):
+**1. Connect UXLoom** — one command sets up everything (MCP config, agent
+skill, starter file):
 
 ```bash
 cd your-project
-claude mcp add uxloom -- npx -y uxloom
+npx uxloom init
 ```
+
+(Equivalent manual form: `claude mcp add uxloom -- npx -y uxloom`.)
 
 **2. Start Claude and ask for a design.** Example first prompt:
 
@@ -78,7 +81,8 @@ while your agent designs — it updates in real time.
 ### Verify any time, without the agent
 
 ```bash
-npx uxloom check          # validates ./uxloom.project.json, exit 1 on errors
+npx uxloom check          # design completeness, exit 1 on errors
+npx uxloom audit          # does the code implement the contract? exit 1 on drift
 ```
 
 ## Path B — Codex CLI

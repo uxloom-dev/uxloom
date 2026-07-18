@@ -668,8 +668,9 @@
       </p>
       <ol class="start-steps">
         <li>
-          <strong>Connect UXLoom</strong> — in your project directory:
-          <code>claude mcp add uxloom -- npx -y uxloom</code>
+          <strong>Connect UXLoom</strong> — one command in your project
+          directory sets up the MCP server, the agent skill, and a starter
+          file: <code>npx uxloom init</code>
         </li>
         <li>
           <strong>Ask your agent for a design</strong> — e.g. “Design the user
@@ -678,13 +679,24 @@
           design lands in <code>uxloom.project.json</code> — commit it.
         </li>
         <li>
+          <strong>Watch it live</strong> — <code>npx uxloom preview</code>
+          renders wireframe mocks of every screen while the agent designs:
+          every contracted state (loading skeletons, empty placeholders,
+          error banners) derived automatically, desktop/tablet/mobile frames,
+          and clickable journey events that walk the flows.
+        </li>
+        <li>
           <strong>Gate it forever</strong> — <code>npx uxloom check</code>
-          exits 1 on errors, in your terminal or in CI.
+          (design completeness) and <code>npx uxloom audit</code>
+          (implementation drift) exit 1 on failure, in your terminal or in CI.
         </li>
       </ol>
+      <img class="start-gif" src="preview-demo.gif" width="1456" height="825"
+           alt="uxloom preview: wireframe mocks with state tabs (default, empty, loading, error) and clickable journey events walking a checkout flow"
+           loading="lazy">
       <img class="start-gif" src="getting-started.gif" width="1100" height="640"
            alt="Terminal recording: connecting UXLoom to Claude Code, then uxloom check reporting 9 errors on a generated design"
-           loading="lazy">
+           loading="lazy" style="margin-top:16px">
       <p class="section-lede" style="margin-top:18px">
         Full walkthrough, Codex setup, and troubleshooting:
         <a href="https://github.com/uxloom-dev/uxloom/blob/main/QUICKSTART.md">QUICKSTART.md</a>
