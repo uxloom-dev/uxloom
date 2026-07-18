@@ -1,0 +1,10 @@
+node_modules
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+.git
+docs
+examples
+rfcs
+tools
+packages/bench/results
