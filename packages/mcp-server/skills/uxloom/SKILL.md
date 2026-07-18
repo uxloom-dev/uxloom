@@ -73,8 +73,16 @@ skipped. Surface the gap list to the user, then design the missing states.
 `npx uxloom check [file]` validates a project file directly — exit 1 on
 errors. Use in CI or when the MCP server is not connected.
 
+## Implementing from the contract
+
+When writing the actual UI code for a contracted screen, emit
+`data-ux-screen` / `data-ux-state` markers where each state renders, then
+verify with uxloom:project_audit — the code stays self-auditing. Details:
+[references/audit.md](references/audit.md).
+
 ## Reference
 
 - **JourneyGraph format** (fields, target refs, exemptions): see [references/format.md](references/format.md)
 - **Critics, finding codes, and thresholds**: see [references/critics.md](references/critics.md)
+- **Implementation audit** (markers, registry, drift): see [references/audit.md](references/audit.md)
 - **Worked example** (checkout journey, before/after): see [references/examples.md](references/examples.md)

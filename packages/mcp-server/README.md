@@ -24,11 +24,14 @@ with the `UXLOOM_PROJECT` environment variable.
 ## CLI
 
 ```bash
-npx uxloom check [file]   # validate a JourneyGraph project; exit 1 on errors
+npx uxloom init           # set up any project: MCP config + skill + starter file
+npx uxloom check [file]   # design completeness; exit 1 on errors
+npx uxloom audit [file]   # implementation drift vs the contract; exit 1 on drift
 ```
 
-Colored findings with concrete fixes — drop it in CI so a happy-path-only
-design can never merge.
+Colored findings with concrete fixes. `check` gates design completeness;
+`audit` gates implementation fidelity via `data-ux-state` markers and an
+optional `uxloom.map.json` screen registry — both CI-ready.
 
 ## Tools
 
@@ -38,6 +41,9 @@ design can never merge.
 | `brief_start` / `brief_answer` | Structured design brief: the agent answers from context, only taste questions escalate to the human, assumptions are logged |
 | `journey_define` | Add a journey — a state machine whose states reference screens |
 | `screen_register` | Add a screen: intent, required states (contract), designed states (progress), components |
+| `project_import` / `project_export` | Whole-design registration / retrieval in one call |
+| `palette_check` | WCAG AA check of design-token color pairs, with thin-margin flags |
+| `project_audit` | Implementation drift: per-state verdicts (implemented / unimplemented / unproven) with file:line evidence |
 | `project_validate` | Run every critic; iterate until zero errors |
 | `screen_critique` | Findings scoped to one screen |
 | `coverage_report` | Screens delivered vs. states the journeys need |

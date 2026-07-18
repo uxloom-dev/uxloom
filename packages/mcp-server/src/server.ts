@@ -10,15 +10,17 @@ import {
   type Screen,
 } from "@uxloom/journeygraph";
 import { critique, critiqueScreen, contrastRatio } from "@uxloom/critics";
+import { dirname, resolve } from "node:path";
 import { ProjectStore } from "./store.js";
 import { briefQuestions, compileBrief } from "./brief.js";
+import { loadMap, runAudit } from "./audit.js";
 
 function json(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
 export function createServer(store = new ProjectStore()): McpServer {
-  const server = new McpServer({ name: "uxloom", version: "0.2.0" });
+  const server = new McpServer({ name: "uxloom", version: "0.3.0" });
 
   server.tool(
     "project_init",
@@ -159,6 +161,23 @@ export function createServer(store = new ProjectStore()): McpServer {
         thinMargins: results.filter((r) => r.thinMargin).length,
         note: "Thin-margin pairs pass today but fail with minor tint/shade drift — pin them in your token system.",
       });
+    },
+  );
+
+  server.tool(
+    "project_audit",
+    "Audit the implementation against the design contract (drift detection). Static tiers: the uxloom.map.json screen registry and data-ux-screen/data-ux-state markers in source. Returns per-state verdicts (implemented with file:line evidence / unimplemented / unproven) and findings with fixes. When implementing screens from the contract, emit data-ux-state markers so the code stays self-auditing.",
+    {
+      root: z
+        .string()
+        .optional()
+        .describe("Implementation root directory to scan (default: the project file's directory)"),
+    },
+    async ({ root }) => {
+      const project = store.load();
+      const auditRoot = root ?? dirname(store.path);
+      const map = loadMap(resolve(auditRoot, "uxloom.map.json"));
+      return json(runAudit(project, auditRoot, map));
     },
   );
 

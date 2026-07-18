@@ -7,16 +7,20 @@
  *   uxloom              start the MCP server on stdio
  *   uxloom init         set up this project: MCP config, agent skill, starter file
  *   uxloom check [file] validate a JourneyGraph project, exit 1 on errors
+ *   uxloom audit [file] audit implementation against the contract, exit 1 on drift
  */
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { createServer } from "./server.js";
 import { runCheck } from "./check.js";
 import { runInit } from "./init.js";
+import { runAuditCli } from "./audit-cli.js";
 
 const [, , command, arg] = process.argv;
 
 if (command === "check") {
   runCheck(arg);
+} else if (command === "audit") {
+  runAuditCli(arg);
 } else if (command === "init") {
   runInit();
 } else if (command === undefined) {
