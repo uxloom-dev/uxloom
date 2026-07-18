@@ -20,7 +20,10 @@ import { updateNotice } from "./update-check.js";
 const { version } = createRequire(import.meta.url)("../package.json") as { version: string };
 const [, , command, arg] = process.argv;
 
-if (command === "check" || command === "audit" || command === "init") {
+if (command === "--version" || command === "-v" || command === "version") {
+  console.log(version);
+  process.exit(0);
+} else if (command === "check" || command === "audit" || command === "init") {
   // Nudge before the command runs (they exit the process when done).
   const notice = await updateNotice(version);
   if (notice) console.error(`\n▲ ${notice}\n`);
@@ -41,5 +44,7 @@ if (command === "check" || command === "audit" || command === "init") {
   console.error("usage: uxloom               # start MCP server (stdio)");
   console.error("       uxloom init          # set up this project (MCP config + skill + starter file)");
   console.error("       uxloom check [file]  # validate a JourneyGraph project");
+  console.error("       uxloom audit [file]  # audit implementation against the contract");
+  console.error("       uxloom --version     # print version");
   process.exit(2);
 }
