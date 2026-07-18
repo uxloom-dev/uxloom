@@ -19,6 +19,8 @@ jobs:
         run: npx tsc --build
       - name: Unit tests
         run: npx vitest run
+      - name: Surface consistency (drift gate)
+        run: node tools/consistency-check.mjs
       - name: Benchmark (regression gate)
         run: node src/run.mjs
         working-directory: packages/bench

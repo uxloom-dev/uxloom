@@ -94,8 +94,11 @@ npm test
 
 ## Status
 
-Pre-release, under active development. The format (`formatVersion: "0.1"`)
-will change without notice until 1.0.
+Released and maintained: on [npm](https://www.npmjs.com/package/uxloom) and
+the official MCP registry, with the benchmark scorecard published in every
+[GitHub release](https://github.com/uxloom-dev/uxloom/releases). The
+JourneyGraph format (`formatVersion: "0.1"`) may evolve until 1.0; releases
+follow [RELEASING.md](RELEASING.md) — every surface is drift-checked in CI.
 
 ## License
 

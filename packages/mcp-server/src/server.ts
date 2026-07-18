@@ -11,16 +11,21 @@ import {
 } from "@uxloom/journeygraph";
 import { critique, critiqueScreen, contrastRatio } from "@uxloom/critics";
 import { dirname, resolve } from "node:path";
+import { createRequire } from "node:module";
 import { ProjectStore } from "./store.js";
 import { briefQuestions, compileBrief } from "./brief.js";
 import { loadMap, runAudit } from "./audit.js";
+
+// Version is DERIVED from package.json — never hardcode it here again.
+// (Hand-bumped strings drifted three releases in a row before this.)
+const { version: VERSION } = createRequire(import.meta.url)("../package.json") as { version: string };
 
 function json(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
 export function createServer(store = new ProjectStore()): McpServer {
-  const server = new McpServer({ name: "uxloom", version: "0.3.0" });
+  const server = new McpServer({ name: "uxloom", version: VERSION });
 
   server.tool(
     "project_init",
