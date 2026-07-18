@@ -17,7 +17,7 @@ Code, Codex, and any MCP client), with Agent Skills included.
 defect catalog, SHA-256-stable across processes, 1000 screens in under 5ms.
 That's what lets design completeness gate CI, where an LLM opinion can't.
 
-**Website:** [uxloom.dev](https://uxloom.dev) · **npm:** [`uxloom`](https://www.npmjs.com/package/uxloom) · **MCP registry:** `io.github.uxloom-dev/uxloom`
+**Website:** [uxloom.dev](https://uxloom.dev) · **npm:** [`uxloom`](https://www.npmjs.com/package/uxloom) · **MCP registry:** `io.github.uxloom-dev/uxloom` · [![uxloom MCP server](https://glama.ai/mcp/servers/uxloom-dev/uxloom/badges/score.svg)](https://glama.ai/mcp/servers/uxloom-dev/uxloom)
 
 ![uxloom check finding 9 errors in a generated checkout flow, then passing the repaired one](docs/demo.gif)
 
