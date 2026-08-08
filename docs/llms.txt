@@ -30,7 +30,9 @@ Claude, or any generator), designing user flows that must survive production
 Tools exposed: project_init, brief_start, brief_answer, journey_define,
 screen_register, project_import, project_export, palette_check,
 project_audit, project_validate, screen_critique, coverage_report,
-design_review (iterative evidence-based review, max 3 rounds).
+design_review (iterative evidence-based review, max 3 rounds),
+comments_list, comment_context, comment_resolve (agent-addressable
+reviewer comments).
 
 ## Design intelligence (evidence-based decisions)
 

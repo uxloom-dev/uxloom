@@ -28,6 +28,26 @@ export interface ReviewerComment {
   text: string;
   resolved: boolean;
   createdAt: string;
+  /** Lifecycle status (RFC 0006). Absent on legacy comments — use commentStatus. */
+  status?: "open" | "assigned" | "resolved";
+  assignedAt?: string;
+  /** Layout block the pin landed on, when the screen had an explicit layout. */
+  block?: { index: number; type: string; label?: string };
+  resolvedAt?: string;
+  resolvedBy?: "agent" | "reviewer";
+  /** What was changed and why — shown to the reviewer. */
+  resolution?: string;
+}
+
+/**
+ * Effective status (RFC 0006): the legacy `resolved` boolean wins, then an
+ * explicit `status: "assigned"`, else open. Legacy comments without a
+ * `status` field are open.
+ */
+export function commentStatus(c: ReviewerComment): "open" | "assigned" | "resolved" {
+  if (c.resolved) return "resolved";
+  if (c.status === "assigned") return "assigned";
+  return "open";
 }
 
 export interface UxloomConfig {
@@ -206,17 +226,39 @@ export function saveBaseline(path: string, baseline: Baseline): void {
   writeFileSync(path, JSON.stringify(baseline, null, 2) + "\n");
 }
 
-/** Open reviewer comments become findings in the same loop agents iterate on. */
+/** Persist the comments sidecar (RFC 0006 contract shape). */
+export function saveComments(commentsPath: string, comments: ReviewerComment[]): void {
+  writeFileSync(commentsPath, JSON.stringify({ comments }, null, 2) + "\n");
+}
+
+/**
+ * Open reviewer comments become findings in the same loop agents iterate on.
+ * Assigned comments (the reviewer clicked "→ agent" in the preview) carry a
+ * distinct message and fix, so an agent that only runs validation still
+ * discovers its work queue.
+ */
 export function commentFindings(comments: ReviewerComment[]): Finding[] {
   return comments
-    .filter((c) => !c.resolved)
-    .map((c) => ({
-      critic: "reviewer",
-      code: "reviewer-comment",
-      severity: "warning" as const,
-      screen: c.screen,
-      state: c.state,
-      message: `Reviewer comment on ${c.screen}#${c.state}: "${c.text}"`,
-      fix: `Address the feedback, then resolve the comment in the preview (or via ${"uxloom"} preview).`,
-    }));
+    .filter((c) => commentStatus(c) !== "resolved")
+    .map((c) =>
+      commentStatus(c) === "assigned"
+        ? {
+            critic: "reviewer",
+            code: "reviewer-comment",
+            severity: "warning" as const,
+            screen: c.screen,
+            state: c.state,
+            message: `Reviewer comment on ${c.screen}#${c.state} (ASSIGNED TO AGENT): "${c.text}"`,
+            fix: "Call comment_context for the full work packet, make the change, then comment_resolve with a resolution note.",
+          }
+        : {
+            critic: "reviewer",
+            code: "reviewer-comment",
+            severity: "warning" as const,
+            screen: c.screen,
+            state: c.state,
+            message: `Reviewer comment on ${c.screen}#${c.state}: "${c.text}"`,
+            fix: `Address the feedback, then resolve the comment in the preview (or via ${"uxloom"} preview).`,
+          },
+    );
 }

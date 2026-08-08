@@ -21,10 +21,18 @@ honestly and iterate until the report is clean.
 3. **Zero errors is the exit condition.** Findings are not suggestions.
 4. **Answer the brief yourself first.** Only relay `askHuman: true` questions
    to the user; report the assumption ledger back in one short paragraph.
-5. **Reviewer comments are findings.** Open comments from the preview appear
-   in validation as `reviewer-comment` warnings: address the feedback in the
-   design, tell the user what changed, and let them resolve the pin in the
-   preview. Never treat designer feedback as optional.
+5. **Reviewer comments are findings — assigned comments are your work
+   queue.** Open comments from the preview appear in validation as
+   `reviewer-comment` warnings. When a reviewer clicks "→ agent" on a pin,
+   the comment is *assigned to you*: run uxloom:comments_list (assigned
+   first), then for each assigned comment call uxloom:comment_context — it
+   returns the full work packet (the comment, the exact layout block it
+   pins, the screen contract, journey references, and current findings for
+   that screen). Make the change, then uxloom:comment_resolve with a real
+   resolution note (what changed and why — the reviewer reads it, and the
+   pin clears live in their preview). Check comments_list at session start
+   and after every validation run. Never resolve without addressing, and
+   never treat designer feedback as optional.
 6. **Decisions carry evidence.** For any substantial design (not quick
    sketches), practice evidence-based design: research the product
    category first, compare real alternatives for every major decision,

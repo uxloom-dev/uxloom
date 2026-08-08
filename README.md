@@ -67,6 +67,13 @@ bounded `design_review` loop (max 3 rounds), and shown to stakeholders in
 the preview's evidence panel (ⓘ) and exports. The design doesn't just
 validate; it argues its case.
 
+**Agent-addressable comments**: a reviewer drops a pinned comment in the
+preview and clicks "→ agent". The comment becomes a work item any Gen-AI
+model can read with full context — `comment_context` returns the pinned
+layout block, the screen contract, the journey references, and the current
+findings for that screen — act on, and resolve back into the preview with
+a note. One click from feedback to addressed.
+
 CI-native: `check` and `audit` take `--json`, `--sarif` (GitHub code
 scanning), and `--github` (inline PR annotations). Brownfield-ready:
 `--update-baseline` freezes existing findings so only *new* drift blocks;

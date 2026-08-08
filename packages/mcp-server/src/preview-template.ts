@@ -214,6 +214,23 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
   .cform .acts { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
   .cform .acts button { font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; }
   .cform .acts .save { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .pin.assigned { background: var(--warn); }
+  .pinpop .acts { display: flex; gap: 6px; margin-top: 6px; }
+  .pinpop .assign { margin-top: 6px; border: 1px solid var(--warn); color: var(--warn);
+                    border-radius: 6px; padding: 2px 10px; font-size: 12px; }
+  .pinpop .assign:hover { background: var(--warn); color: #fff; }
+  .pinpop .asgchip { display: inline-block; margin-top: 6px; font-size: 11px; color: var(--warn);
+                     border: 1px solid var(--warn); border-radius: 999px; padding: 0 8px; }
+  .cnt.asg { background: var(--warn); }
+  .cbtn.on .cnt.asg { background: var(--warn); color: #fff; }
+  .atoast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 40;
+            background: var(--ink); color: #fff; border-radius: 10px; padding: 10px 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.35); font-size: 12.5px; max-width: 560px;
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .atoast code { font-size: 11.5px; background: rgba(255,255,255,.12); border-radius: 6px; padding: 2px 6px; }
+  .atoast button { border: 1px solid rgba(255,255,255,.4); border-radius: 6px; padding: 2px 10px;
+                   font-size: 12px; color: #fff; }
+  .atoast button:hover { background: rgba(255,255,255,.15); }
 
   /* edit mode */
   .ewrap { position: relative; }
@@ -448,6 +465,12 @@ function renderScreenBody(screen, stateId) {
   } else {
     blocks.forEach(function (b, i) {
       var el = renderBlock(b, screen);
+      /* comment pins anchor to explicit-layout blocks only (file-stable indexes) */
+      if (screen.layout && screen.layout.blocks) {
+        el.setAttribute("data-bi", String(i));
+        el.setAttribute("data-bt", b.type);
+        if (b.label) el.setAttribute("data-bl", b.label);
+      }
       content.appendChild(editing ? EDIT.wrap(el, b, i, screen) : el);
     });
   }
@@ -470,30 +493,81 @@ function renderScreenBody(screen, stateId) {
 }
 
 /* --------------------------- comment mode --------------------------- */
+/* effective lifecycle status (RFC 0006): legacy comments have no status */
+function cstatus(c) {
+  if (c.resolved) return "resolved";
+  return c.status === "assigned" ? "assigned" : "open";
+}
+
 function openCommentsFor(screenId) {
-  return comments.filter(function (c) { return !c.resolved && c.screen === screenId; });
+  return comments.filter(function (c) { return cstatus(c) !== "resolved" && c.screen === screenId; });
+}
+
+var AGENT_PROMPT = "Address the assigned UXLoom comments (comments_list \\u2192 comment_context \\u2192 fix \\u2192 comment_resolve).";
+
+/* after "\\u2192 agent": tell the reviewer the exact line to hand their agent */
+function showAssignToast() {
+  var old = document.querySelector(".atoast");
+  if (old) old.remove();
+  var t = h("div", "atoast");
+  t.setAttribute("role", "status");
+  t.appendChild(h("span", null, "Assigned. Tell your agent:"));
+  var code = h("code", null, AGENT_PROMPT);
+  t.appendChild(code);
+  var cp = h("button", null, "Copy");
+  cp.setAttribute("aria-label", "Copy the agent prompt");
+  cp.onclick = function () {
+    var done = function () { cp.textContent = "Copied"; };
+    /* clipboard API may be unavailable on plain http — the visible text is the fallback */
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(AGENT_PROMPT).then(done).catch(done);
+    } else done();
+  };
+  var x = h("button", null, "\\u00d7");
+  x.setAttribute("aria-label", "Dismiss");
+  x.onclick = function () { t.remove(); };
+  t.appendChild(cp); t.appendChild(x);
+  document.body.appendChild(t);
+  setTimeout(function () { if (t.parentNode) t.remove(); }, 15000);
 }
 
 function attachComments(body, screen) {
   var mine = comments.filter(function (c) {
-    return !c.resolved && c.screen === screen.id && c.state === sel.state;
+    return cstatus(c) !== "resolved" && c.screen === screen.id && c.state === sel.state;
   });
   mine.forEach(function (c, i) {
+    var assigned = cstatus(c) === "assigned";
     var w = h("div", "pinwrap");
     w.style.left = c.x + "%"; w.style.top = c.y + "%";
-    var p = h("button", "pin", String(i + 1));
-    p.setAttribute("aria-label", "Comment " + (i + 1) + ": " + c.text);
+    var p = h("button", "pin" + (assigned ? " assigned" : ""), String(i + 1));
+    p.setAttribute("aria-label", "Comment " + (i + 1) + (assigned ? " (assigned to agent)" : "") + ": " + c.text);
     p.onclick = function (e) { e.stopPropagation(); w.classList.toggle("open"); };
     var pop = h("div", "pinpop");
     pop.appendChild(h("div", null, c.text));
+    if (assigned) pop.appendChild(h("span", "asgchip", "\\u2192 assigned to agent"));
+    var acts = h("div", "acts");
     var rb = h("button", "resolve", "Resolve");
     rb.onclick = function (e) {
       e.stopPropagation();
       postJson("/comments/resolve", { id: c.id }).then(function () {
-        c.resolved = true; render();
+        c.resolved = true; c.status = "resolved"; render();
       }).catch(function () {});
     };
-    pop.appendChild(rb);
+    acts.appendChild(rb);
+    if (!assigned) {
+      var ab = h("button", "assign", "\\u2192 agent");
+      ab.setAttribute("aria-label", "Assign to agent");
+      ab.title = "Hand this comment to the agent: it reads the pin, the block it points at, and the screen contract";
+      ab.onclick = function (e) {
+        e.stopPropagation();
+        postJson("/comments/assign", { id: c.id }).then(function (u) {
+          c.status = "assigned"; c.assignedAt = u.assignedAt;
+          showAssignToast(); render();
+        }).catch(function () {});
+      };
+      acts.appendChild(ab);
+    }
+    pop.appendChild(acts);
     pop.onclick = function (e) { e.stopPropagation(); };
     w.appendChild(p); w.appendChild(pop);
     body.appendChild(w);
@@ -508,6 +582,14 @@ function placePin(e, body, screen) {
   var rect = body.getBoundingClientRect();
   var x = Math.round((e.clientX - rect.left) / rect.width * 1000) / 10;
   var y = Math.round((e.clientY - rect.top) / rect.height * 1000) / 10;
+  /* anchor the pin to the layout block it lands on (explicit layouts only —
+     indexes must map 1:1 to the project file, same rule as edit mode) */
+  var anchor = null;
+  var be = e.target.closest ? e.target.closest("[data-bi]") : null;
+  if (be && body.contains(be)) {
+    anchor = { index: +be.getAttribute("data-bi"), type: be.getAttribute("data-bt") };
+    if (be.getAttribute("data-bl")) anchor.label = be.getAttribute("data-bl");
+  }
   var form = h("div", "cform");
   form.style.left = Math.min(Math.max(x, 2), 68) + "%";
   form.style.top = Math.min(Math.max(y, 2), 88) + "%";
@@ -519,7 +601,9 @@ function placePin(e, body, screen) {
   function submit() {
     var text = inp.value.trim();
     if (!text) return;
-    postJson("/comments", { screen: screen.id, state: sel.state, x: x, y: y, text: text })
+    var payload = { screen: screen.id, state: sel.state, x: x, y: y, text: text };
+    if (anchor) payload.block = anchor;
+    postJson("/comments", payload)
       .then(function (c) { comments.push(c); render(); })
       .catch(function () { form.remove(); });
   }
@@ -701,12 +785,20 @@ function render() {
     bar.appendChild(h("span", "chip", "coverage " + des + "/" + req));
   }
   if (!STATIC_INFO && screen) {
-    var openCount = openCommentsFor(screen.id).length;
+    var unresolved = openCommentsFor(screen.id);
+    var asgCount = unresolved.filter(function (c) { return cstatus(c) === "assigned"; }).length;
+    var openCount = unresolved.length - asgCount;
     var cb = h("button", "cbtn" + (commentMode ? " on" : ""));
     cb.appendChild(document.createTextNode("\\ud83d\\udcac comment"));
     if (openCount) cb.appendChild(h("span", "cnt", String(openCount)));
+    if (asgCount) {
+      var asgChip = h("span", "cnt asg", asgCount + "\\u2192");
+      asgChip.setAttribute("aria-label", asgCount + " assigned to agent");
+      cb.appendChild(asgChip);
+    }
     cb.setAttribute("aria-pressed", commentMode ? "true" : "false");
-    cb.title = "Comment mode: click the mock to leave a pinned note";
+    cb.title = "Comment mode: click the mock to leave a pinned note" +
+      (asgCount ? " \\u00b7 " + asgCount + " assigned to agent" : "");
     cb.onclick = function () {
       commentMode = !commentMode;
       if (commentMode && EDIT) EDIT.on = false; /* modes are exclusive */

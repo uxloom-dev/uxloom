@@ -169,10 +169,15 @@ uxloom:design_review (max 3 rounds, enforced).
 freezes existing findings into `uxloom.baseline.json` (brownfield
 adoption: block only new drift). Never baseline findings you can fix now.
 
-**Reviewer comments** — designers drop comments in the preview; open
-comments appear in validation as `reviewer-comment` warnings. Address the
-feedback, then resolve the comment in the preview. Never resolve without
-addressing.
+**Reviewer comments (agent-addressable, v0.9)** — designers drop pinned
+comments in the preview; each pin records its screen, state, and the layout
+block it lands on. Open comments appear in validation as `reviewer-comment`
+warnings; comments the reviewer clicked "→ agent" on are *assigned* and
+appear first. The loop: uxloom:comments_list → uxloom:comment_context (full
+work packet: comment, anchored block, screen contract, journey refs,
+screen findings) → make the change → uxloom:comment_resolve with a real
+resolution note. Resolutions persist to `<project>.comments.json` and the
+pin clears live in every open preview. Never resolve without addressing.
 
 ## Validation rules the schema enforces
 

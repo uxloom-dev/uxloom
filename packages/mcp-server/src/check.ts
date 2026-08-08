@@ -5,6 +5,7 @@ import { critique, rationaleCoverage } from "@uxloom/critics";
 import {
   applyBaseline,
   commentFindings,
+  commentStatus,
   criticOptionsFor,
   fingerprint,
   loadWorkspace,
@@ -62,6 +63,7 @@ export function runCheck(fileArg?: string, flags: string[] = []): never {
   const { fresh, suppressed } = applyBaseline(all, ws.baseline.check);
   const errors = fresh.filter((f) => f.severity === "error").length;
   const warnings = fresh.filter((f) => f.severity === "warning").length;
+  const assignedComments = ws.comments.filter((c) => commentStatus(c) === "assigned").length;
   const projectFile = relative(process.cwd(), ws.projectPath) || ws.projectPath;
 
   if (format !== "human") {
@@ -78,7 +80,7 @@ export function runCheck(fileArg?: string, flags: string[] = []): never {
     console.log(render(
       {
         tool: "uxloom", command: "check", version: VERSION,
-        summary: { errors, warnings, suppressed, screens: ws.project.screens.length, journeys: ws.project.journeys.length },
+        summary: { errors, warnings, suppressed, assignedComments, screens: ws.project.screens.length, journeys: ws.project.journeys.length },
         findings,
       },
       format,
@@ -119,6 +121,12 @@ export function runCheck(fileArg?: string, flags: string[] = []): never {
     console.log(
       `design rationale: ${rc.documented}/${rc.total} decisions documented` +
       (rc.documented < rc.total ? yellow("  (evidence-based design adopted — document the rest)") : green("  ✔ fully evidenced")),
+    );
+  }
+  if (assignedComments > 0) {
+    console.log(
+      yellow(`${assignedComments} reviewer comment(s) assigned to the agent`) +
+      dim(`  — comments_list → comment_context → fix → comment_resolve (sidecar: ${relative(process.cwd(), ws.commentsPath)})`),
     );
   }
   if (suppressed > 0) console.log(dim(`${suppressed} finding(s) suppressed by baseline`));

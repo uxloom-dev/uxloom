@@ -59,6 +59,9 @@ optional `uxloom.map.json` screen registry — both CI-ready.
 | `palette_check` | WCAG AA check of design-token color pairs, with thin-margin flags |
 | `project_audit` | Implementation drift: per-state verdicts (implemented / unimplemented / unproven) with file:line evidence |
 | `design_review` | Iterative evidence-based review — max 3 rounds (enforced, persisted), six-part rubric incl. market fit; pairs with per-decision `rationale` in the format |
+| `comments_list` | Reviewer comments with lifecycle status — comments assigned via the preview's "→ agent" click are the agent's work queue |
+| `comment_context` | Full work packet for one comment: the pinned layout block, screen contract, journey refs, and screen-scoped findings |
+| `comment_resolve` | Resolve after addressing, with a resolution note the reviewer reads; the pin clears live in every open preview |
 | `project_validate` | Run every critic; iterate until zero errors |
 | `screen_critique` | Findings scoped to one screen |
 | `coverage_report` | Screens delivered vs. states the journeys need |

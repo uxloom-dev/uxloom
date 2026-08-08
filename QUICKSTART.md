@@ -118,12 +118,20 @@ verifies markers in the real DOM, and `npx uxloom export --png shots/`
 renders every screen×state to images. `npx uxloom export --svg mocks/`
 needs nothing extra — the SVGs import straight into Figma or Penpot.
 
-### Designers: comment directly on the mocks
+### Designers: comment directly on the mocks — and hand them to the agent
 
 In `npx uxloom preview`, toggle comment mode and click anywhere on a
 screen to leave feedback. Open comments appear in `uxloom check` as
 `reviewer-comment` warnings — your feedback enters the agent's fix loop,
 and you resolve it in the preview when it's addressed.
+
+Click **"→ agent"** on any comment to assign it. The agent (any MCP
+client — Claude, Codex, anything) then reads the whole work packet with
+`comment_context`: the pinned layout block, the screen contract, the
+journey references, and the current findings for that screen. It makes
+the change and calls `comment_resolve` with a note explaining what it did
+— the pin clears live in your preview. One click turns a pinned note into
+addressed work.
 
 **Or edit directly**: toggle edit mode (✎) to reorder blocks, rewrite
 copy and labels inline, add/remove blocks, and adjust design tokens —

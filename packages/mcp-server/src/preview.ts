@@ -6,8 +6,9 @@
  *
  * Comment mode persists review pins to a sidecar file next to the
  * project (uxloom.project.json → uxloom.project.comments.json) via
- * GET /comments, POST /comments, POST /comments/resolve; the watcher
- * broadcasts changes to that file too, so all viewers stay in sync.
+ * GET /comments, POST /comments, POST /comments/assign, POST
+ * /comments/resolve; the watcher broadcasts changes to that file too, so
+ * all viewers stay in sync — including pins the MCP tools resolve.
  *
  * Structured edit mode (R13): POST /edit applies designer edits (copy,
  * labels, block reorder/add/remove, design tokens) to the project file
@@ -33,6 +34,14 @@ interface PreviewComment {
   text: string;
   resolved: boolean;
   createdAt: string;
+  /** Lifecycle status (RFC 0006). Absent on legacy comments = open. */
+  status?: "open" | "assigned" | "resolved";
+  assignedAt?: string;
+  /** Layout block the pin landed on, when the screen has an explicit layout. */
+  block?: { index: number; type: string; label?: string };
+  resolvedAt?: string;
+  resolvedBy?: "agent" | "reviewer";
+  resolution?: string;
 }
 
 interface CommentStore {
@@ -308,6 +317,19 @@ export function createPreviewServer(projectPath: string, port: number): Server {
         ) {
           return json(400, { error: "expected { screen, state, x, y, text }" });
         }
+        let block: PreviewComment["block"];
+        if (body.block !== undefined) {
+          const b = body.block as Record<string, unknown>;
+          if (
+            typeof b !== "object" || b === null || Array.isArray(b) ||
+            typeof b.index !== "number" || !Number.isInteger(b.index) || b.index < 0 ||
+            typeof b.type !== "string" || b.type === "" ||
+            (b.label !== undefined && typeof b.label !== "string")
+          ) {
+            return json(400, { error: "block must be { index: non-negative integer, type: string, label?: string }" });
+          }
+          block = { index: b.index, type: b.type, ...(b.label !== undefined ? { label: b.label as string } : {}) };
+        }
         const comment: PreviewComment = {
           id: randomUUID(),
           screen: body.screen,
@@ -317,11 +339,37 @@ export function createPreviewServer(projectPath: string, port: number): Server {
           text: body.text,
           resolved: false,
           createdAt: new Date().toISOString(),
+          status: "open",
+          ...(block ? { block } : {}),
         };
         const store = readStore();
         store.comments.push(comment);
         writeStore(store);
         json(200, comment);
+      });
+    } else if (req.url === "/comments/assign" && req.method === "POST") {
+      collectBody(req, (raw) => {
+        let body: Record<string, unknown>;
+        try {
+          body = JSON.parse(raw) as Record<string, unknown>;
+        } catch {
+          return json(400, { error: "body must be valid JSON" });
+        }
+        if (typeof body !== "object" || body === null || typeof body.id !== "string") {
+          return json(400, { error: "expected { id }" });
+        }
+        const store = readStore();
+        const found = store.comments.find((c) => c.id === body.id);
+        if (!found) return json(404, { error: `no comment with id ${body.id}` });
+        if (found.resolved || found.status === "resolved") {
+          return json(409, { error: `comment ${body.id} is already resolved` });
+        }
+        if (found.status !== "assigned") {
+          found.status = "assigned";
+          found.assignedAt = new Date().toISOString();
+          writeStore(store);
+        }
+        json(200, found);
       });
     } else if (req.url === "/comments/resolve" && req.method === "POST") {
       collectBody(req, (raw) => {
@@ -338,6 +386,9 @@ export function createPreviewServer(projectPath: string, port: number): Server {
         const found = store.comments.find((c) => c.id === body.id);
         if (!found) return json(404, { error: `no comment with id ${body.id}` });
         found.resolved = true;
+        found.status = "resolved";
+        found.resolvedAt = new Date().toISOString();
+        found.resolvedBy = "reviewer";
         writeStore(store);
         json(200, found);
       });

@@ -76,6 +76,11 @@
     },
     {
       "@type": "Question",
+      "name": "Can a reviewer hand a comment straight to the AI agent?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. In the live preview a reviewer pins a comment on any screen and clicks the arrow-to-agent action. The comment becomes a work item any Gen-AI model can read with full context: comment_context returns the exact layout block the pin points at, the screen's contract, the journey states that use it, and the current findings for that screen. The agent makes the change and calls comment_resolve with a note, and the pin clears live in the reviewer's browser." }
+    },
+    {
+      "@type": "Question",
       "name": "Is UXLoom free?",
       "acceptedAnswer": { "@type": "Answer", "text": "Yes. UXLoom is open source under the MIT license. The design data lives in a plain JSON file (uxloom.project.json) versioned in your own git repository." }
     }
@@ -374,7 +379,7 @@
       UXLoom
     </a>
     <nav class="nav-links" aria-label="Primary">
-      <span class="pill">v0.8</span>
+      <span class="pill">v0.9</span>
       <a href="/docs.html">Docs</a>
       <a href="https://github.com/uxloom-dev/uxloom">GitHub</a>
       <a href="https://www.npmjs.com/package/uxloom">npm</a>
@@ -690,7 +695,11 @@
           the agent designs: every contracted state derived automatically,
           desktop/tablet/mobile frames, clickable journey events — themed by
           your design tokens, with a comment mode where reviewers drop pins
-          that flow straight into the validation loop. Share with anyone via
+          that flow straight into the validation loop. Click
+          <strong>“→ agent”</strong> on any pin to hand it to the model: it
+          reads the comment, the exact layout block it points at, and the
+          screen contract, makes the change, and resolves the pin live.
+          Share with anyone via
           <code>npx uxloom export</code> (one self-contained HTML file).
         </li>
         <li>
@@ -779,6 +788,18 @@
           the design against market conventions, and the full evidence renders
           in the preview and exports — so you see <em>why</em> every element is
           on screen, not just that it is.</p>
+        </details>
+        <details>
+          <summary>Can a reviewer hand a comment straight to the AI agent?</summary>
+          <p>Yes. In the live preview a reviewer pins a comment on any screen
+          and clicks <strong>“→ agent”</strong>. The comment becomes a work
+          item any Gen-AI model can read with full context: <code>comment_context</code>
+          returns the exact layout block the pin points at, the screen’s
+          contract, the journey states that use it, and the current findings
+          for that screen. The agent makes the change and calls
+          <code>comment_resolve</code> with a note — the pin clears live in the
+          reviewer’s browser. One click turns feedback into addressed work,
+          with no back-and-forth explaining what or where.</p>
         </details>
         <details>
           <summary>Is UXLoom free?</summary>

@@ -17,10 +17,12 @@ import { briefQuestions, compileBrief } from "./brief.js";
 import { loadMap, runAudit } from "./audit.js";
 import {
   commentFindings,
+  commentStatus,
   criticOptionsFor,
   loadReviews,
   loadWorkspace,
   reviewsPathFor,
+  saveComments,
   saveReviews,
 } from "./workspace.js";
 import { rationaleCoverage } from "@uxloom/critics";
@@ -241,6 +243,126 @@ export function createServer(store = new ProjectStore()): McpServer {
   );
 
   server.tool(
+    "comments_list",
+    "Reviewer comments from the preview, with lifecycle status. Comments the reviewer clicked \"→ agent\" on are ASSIGNED — they are your work queue: call comment_context for each (assigned first, then open), make the change, then comment_resolve. Check this at session start and after every validation run.",
+    {
+      status: z
+        .enum(["open", "assigned", "resolved", "all"])
+        .optional()
+        .describe("Filter by effective status. Default: unresolved (open + assigned), assigned first."),
+    },
+    async ({ status }) => {
+      const ws = loadWorkspace(store.path);
+      const withStatus = ws.comments.map((c) => ({ ...c, status: commentStatus(c) }));
+      const filtered =
+        status === "all"
+          ? withStatus
+          : status
+            ? withStatus.filter((c) => c.status === status)
+            : withStatus.filter((c) => c.status !== "resolved");
+      const rank = { assigned: 0, open: 1, resolved: 2 } as const;
+      filtered.sort((a, b) => rank[a.status] - rank[b.status] || a.createdAt.localeCompare(b.createdAt));
+      const counts = {
+        open: withStatus.filter((c) => c.status === "open").length,
+        assigned: withStatus.filter((c) => c.status === "assigned").length,
+        resolved: withStatus.filter((c) => c.status === "resolved").length,
+      };
+      return json({
+        comments: filtered,
+        counts,
+        next:
+          counts.assigned > 0
+            ? "Assigned comments first: call comment_context with each id, address it, then comment_resolve with a resolution note."
+            : counts.open > 0
+              ? "Open comments are reviewer feedback awaiting action — address them, then let the reviewer resolve (or resolve with a note after addressing)."
+              : "No unresolved comments.",
+      });
+    },
+  );
+
+  server.tool(
+    "comment_context",
+    "The full work packet for one reviewer comment: the comment, the exact layout block its pin lands on, the complete screen definition (contract, components, layout, rationale, exemptions), every journey state referencing that screen with its transitions, and the current validation findings scoped to that screen. Use it to address the comment precisely, then call comment_resolve.",
+    { id: z.string().describe("Comment id from comments_list") },
+    async ({ id }) => {
+      const ws = loadWorkspace(store.path);
+      const comment = ws.comments.find((c) => c.id === id);
+      if (!comment) {
+        return json({
+          error: `no comment with id "${id}"`,
+          unresolvedIds: ws.comments.filter((c) => commentStatus(c) !== "resolved").map((c) => c.id),
+        });
+      }
+      const screen = ws.project.screens.find((s) => s.id === comment.screen);
+      const blocks = screen?.layout?.blocks;
+      const anchoredBlock =
+        comment.block && blocks
+          ? comment.block.index < blocks.length
+            ? blocks[comment.block.index]
+            : { note: `stale anchor: pin recorded block index ${comment.block.index} (${comment.block.type}) but the layout now has ${blocks.length} blocks — locate the block by its recorded type/label instead` }
+          : null;
+      const journeyRefs = ws.project.journeys.flatMap((j) =>
+        Object.entries(j.states)
+          .filter(([, s]) => s.screen === comment.screen)
+          .map(([stateId, s]) => ({ journey: j.id, state: stateId, final: s.final ?? false, on: s.on ?? {} })),
+      );
+      return json({
+        comment: { ...comment, status: commentStatus(comment) },
+        anchoredBlock,
+        screen: screen ?? { note: `screen "${comment.screen}" is no longer in the project — the comment may be outdated; resolve it with a note saying so` },
+        journeyRefs,
+        screenFindings: screen ? critiqueScreen(ws.project, comment.screen) : [],
+        instruction:
+          "Address exactly what the comment asks — via the MCP tools or by editing the project file — then call comment_resolve with a resolution note the reviewer will read. Never resolve without addressing.",
+      });
+    },
+  );
+
+  server.tool(
+    "comment_resolve",
+    "Resolve a reviewer comment after addressing it. The resolution note is shown to the reviewer and persisted; the pin clears live in every open preview. Never resolve without actually making the change.",
+    {
+      id: z.string().describe("Comment id"),
+      resolution: z
+        .string()
+        .min(10)
+        .describe("What was changed and why — a real sentence the reviewer will read, not an acknowledgment"),
+    },
+    async ({ id, resolution }) => {
+      const ws = loadWorkspace(store.path);
+      const comment = ws.comments.find((c) => c.id === id);
+      if (!comment) {
+        return json({
+          error: `no comment with id "${id}"`,
+          unresolvedIds: ws.comments.filter((c) => commentStatus(c) !== "resolved").map((c) => c.id),
+        });
+      }
+      if (commentStatus(comment) === "resolved") {
+        return json({ error: `comment "${id}" is already resolved`, comment });
+      }
+      comment.status = "resolved";
+      comment.resolved = true;
+      comment.resolvedAt = new Date().toISOString();
+      comment.resolvedBy = "agent";
+      comment.resolution = resolution;
+      saveComments(ws.commentsPath, ws.comments);
+      const remaining = ws.comments.filter((c) => commentStatus(c) !== "resolved");
+      const assigned = remaining.filter((c) => commentStatus(c) === "assigned");
+      return json({
+        ok: true,
+        resolved: comment,
+        remaining: { open: remaining.length - assigned.length, assigned: assigned.length },
+        next:
+          assigned.length > 0
+            ? `${assigned.length} assigned comment(s) remain — continue with comment_context on "${assigned[0].id}".`
+            : remaining.length > 0
+              ? `${remaining.length} open comment(s) remain — address them too.`
+              : "All reviewer comments resolved.",
+      });
+    },
+  );
+
+  server.tool(
     "project_audit",
     "Audit the implementation against the design contract (drift detection). Static tiers: the uxloom.map.json screen registry and data-ux-screen/data-ux-state markers in source. Returns per-state verdicts (implemented with file:line evidence / unimplemented / unproven) and findings with fixes. When implementing screens from the contract, emit data-ux-state markers so the code stays self-auditing.",
     {
@@ -273,6 +395,7 @@ export function createServer(store = new ProjectStore()): McpServer {
           errors: report.summary.errors + extra.filter((f) => f.severity === "error").length,
           warnings: report.summary.warnings + extra.filter((f) => f.severity === "warning").length,
           openReviewerComments: ws.comments.filter((c) => !c.resolved).length,
+          assignedComments: ws.comments.filter((c) => commentStatus(c) === "assigned").length,
           fragments: ws.fragments.length,
         },
       });
