@@ -74,6 +74,8 @@ layout block, the screen contract, the journey references, and the current
 findings for that screen — act on, and resolve back into the preview with
 a note. One click from feedback to addressed.
 
+![Reviewer pins a comment, clicks "→ agent"; the pin turns amber and a copyable prompt hands the comment to any AI agent, which reads the block and contract and resolves it](docs/preview-handoff.gif)
+
 CI-native: `check` and `audit` take `--json`, `--sarif` (GitHub code
 scanning), and `--github` (inline PR annotations). Brownfield-ready:
 `--update-baseline` freezes existing findings so only *new* drift blocks;
