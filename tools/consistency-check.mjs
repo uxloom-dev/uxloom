@@ -31,7 +31,7 @@ await Promise.all([client.connect(ct), server.connect(st)]);
 const tools = (await client.listTools()).tools.map((t) => t.name).sort();
 await client.close();
 
-const KNOWN_CLI = ["init", "check", "audit", "preview", "export"];
+const KNOWN_CLI = ["init", "check", "audit", "preview", "export", "diff"];
 const cliUsage = read("packages/mcp-server/src/cli.ts");
 const cliCommands = KNOWN_CLI.filter((c) => cliUsage.includes(`"${c}"`));
 

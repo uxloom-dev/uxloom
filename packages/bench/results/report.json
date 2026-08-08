@@ -261,22 +261,22 @@
     "scaling": [
       {
         "screens": 10,
-        "medianMs": 0.015875
+        "medianMs": 0.020333
       },
       {
         "screens": 100,
-        "medianMs": 0.19125
+        "medianMs": 0.232209
       },
       {
         "screens": 500,
-        "medianMs": 1.23925
+        "medianMs": 1.320417
       },
       {
         "screens": 1000,
-        "medianMs": 4.004375
+        "medianMs": 4.050875
       }
     ],
-    "cliColdStartMedianMs": 73.36875
+    "cliColdStartMedianMs": 81.182375
   },
   "fuzz": {
     "iterations": 500,

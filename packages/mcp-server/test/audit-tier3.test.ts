@@ -4,6 +4,7 @@ import type { MarkerQualityFinding } from "uxloom/dist/audit-tier3.js";
 
 /** Analyze a single fixture file. */
 const analyze = (text: string) => analyzeMarkerQuality([{ path: "app/page.tsx", text }]);
+const analyzeAt = (path: string, text: string) => analyzeMarkerQuality([{ path, text }]);
 const ofCode = (findings: MarkerQualityFinding[], code: MarkerQualityFinding["code"]) =>
   findings.filter((f) => f.code === code);
 
@@ -180,5 +181,147 @@ describe("conservatism and edges", () => {
       },
     ]);
     expect(findings.map((f) => `${f.file}:${f.line}`)).toEqual(["a.tsx:3", "b.tsx:1"]);
+  });
+});
+
+describe("native marker forms (comment / identifier)", () => {
+  it("never flags a comment marker as thin — comments cannot prove emptiness", () => {
+    const findings = analyzeAt(
+      "android/Detail.kt",
+      `// data-ux-screen: Detail
+if (items.isEmpty()) {
+  // data-ux-state: empty
+  EmptyCard()
+}`,
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it("never flags identifier markers as duplicate-bare, even on identical call shapes", () => {
+    const findings = analyzeAt(
+      "ios/Panel.swift",
+      `if a {
+  Panel().accessibilityIdentifier("ux-state:loading")
+}
+if b {
+  Panel().accessibilityIdentifier("ux-state:empty")
+}`,
+    );
+    expect(ofCode(findings, "state-marker-duplicate")).toEqual([]);
+    expect(ofCode(findings, "state-marker-thin")).toEqual([]);
+  });
+
+  it("does NOT flag a comment marker as static when Swift `if ` is nearby", () => {
+    const findings = analyzeAt(
+      "ios/Inbox.swift",
+      `var body: some View {
+  if isLoading {
+    // data-ux-state: loading
+    ProgressView()
+  }
+}`,
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it("flags an unconditional loading comment marker in .swift as static", () => {
+    const findings = analyzeAt(
+      "ios/Splash.swift",
+      `struct SplashView: View {
+  var body: some View {
+    // data-ux-state: loading
+    ProgressView()
+  }
+}`,
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
+      code: "state-marker-static",
+      state: "loading",
+      file: "ios/Splash.swift",
+      line: 3,
+    });
+    expect(findings[0].message).toContain("data-ux-state: loading");
+  });
+
+  it("flags an unconditional loading identifier marker as static", () => {
+    const findings = analyzeAt(
+      "ios/Root.swift",
+      `struct RootView: View {
+  var body: some View {
+    ProgressView().accessibilityIdentifier("ux-state:loading")
+  }
+}`,
+    );
+    expect(ofCode(findings, "state-marker-static")).toHaveLength(1);
+    expect(findings[0].message).toContain("ux-state:loading");
+  });
+
+  it("suppresses static inside `struct LoadingView`", () => {
+    const findings = analyzeAt(
+      "ios/Loading.swift",
+      `struct LoadingView: View {
+  var body: some View {
+    // data-ux-state: loading
+    ProgressView()
+  }
+}`,
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it("suppresses static inside `fun EmptyState(`", () => {
+    const findings = analyzeAt(
+      "android/Empty.kt",
+      `@Composable
+fun EmptyState(modifier: Modifier) {
+  Card(modifier.testTag("ux-state:empty"))
+}`,
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it("treats Kotlin `when (` as a conditional signal", () => {
+    const findings = analyzeAt(
+      "android/Feed.kt",
+      `@Composable
+fun Feed(state: UiState) {
+  when (state) {
+    UiState.Loading -> Spinner(Modifier.testTag("ux-state:loading"))
+  }
+}`,
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it("treats Kotlin `.let` as a conditional signal", () => {
+    const findings = analyzeAt(
+      "android/Banner.kt",
+      `fun render(err: Failure) {
+  err.let {
+    // data-ux-state: error.network
+    ErrorCard(it)
+  }
+}`,
+    );
+    expect(findings).toEqual([]);
+  });
+
+  it("resolves the screen for a static warning from a .dart comment marker", () => {
+    const findings = analyzeAt(
+      "lib/home.dart",
+      `// data-ux-screen: Home
+Widget build() {
+  return Spinner(); // data-ux-state: loading
+}`,
+    );
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toMatchObject({
+      code: "state-marker-static",
+      screen: "Home",
+      state: "loading",
+      file: "lib/home.dart",
+      line: 3,
+    });
   });
 });

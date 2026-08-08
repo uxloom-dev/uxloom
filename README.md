@@ -51,16 +51,20 @@ in git — the design is data, versioned next to the code it specifies.
 
 ```bash
 npx uxloom init      # one-command setup: MCP config + agent skill + starter file
-npx uxloom preview   # live mocks (themed via design tokens) + reviewer comments
-npx uxloom export    # one shareable self-contained HTML file for stakeholders
+npx uxloom preview   # live mocks (themed, commentable, EDITABLE in the browser)
+npx uxloom export    # shareable HTML — plus --svg (Figma/Penpot import) and
+                     #   --png (needs optional playwright)
 npx uxloom check     # design completeness — exit 1 on errors, CI-ready
-npx uxloom audit     # implementation drift vs the contract — exit 1 on drift
+npx uxloom audit     # implementation drift — web AND native (Swift/Kotlin/
+                     #   Dart/Java markers); --live verifies the real DOM
+npx uxloom diff      # human-readable design diffs for PR review
 ```
 
 CI-native: `check` and `audit` take `--json`, `--sarif` (GitHub code
 scanning), and `--github` (inline PR annotations). Brownfield-ready:
 `--update-baseline` freezes existing findings so only *new* drift blocks;
-`uxloom.config.json` tunes thresholds to your accessibility bar.
+`uxloom.config.json` tunes thresholds to your accessibility bar. Full
+documentation: [uxloom.dev/docs.html](https://uxloom.dev/docs.html).
 
 ![Live preview: state tabs and clickable journey events on wireframe mocks](docs/preview-demo.gif)
 

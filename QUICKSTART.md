@@ -100,12 +100,35 @@ copy it to `.agents/skills/` for best results.
 npx uxloom export         # writes uxloom-preview.html — email it, host it
 ```
 
+### Design changes in PRs — readable, not JSON walls
+
+```bash
+npx uxloom diff --git main            # semantic diff vs main
+npx uxloom diff old.json new.json --markdown   # PR-comment ready
+```
+
+### Native apps too
+
+The audit reads native markers: add `// data-ux-screen: X` and
+`// data-ux-state: y` comments (any language), or use
+`.accessibilityIdentifier("ux-state:y")` in SwiftUI /
+`Modifier.testTag("ux-state:y")` in Compose. With optional playwright
+(`npm i -D playwright`), `npx uxloom audit --live http://localhost:3000`
+verifies markers in the real DOM, and `npx uxloom export --png shots/`
+renders every screen×state to images. `npx uxloom export --svg mocks/`
+needs nothing extra — the SVGs import straight into Figma or Penpot.
+
 ### Designers: comment directly on the mocks
 
 In `npx uxloom preview`, toggle comment mode and click anywhere on a
 screen to leave feedback. Open comments appear in `uxloom check` as
 `reviewer-comment` warnings — your feedback enters the agent's fix loop,
 and you resolve it in the preview when it's addressed.
+
+**Or edit directly**: toggle edit mode (✎) to reorder blocks, rewrite
+copy and labels inline, add/remove blocks, and adjust design tokens —
+every change writes to the same project file your agent works from,
+validated before saving, live for every viewer.
 
 ## Path C — CI gate (no agent involved)
 

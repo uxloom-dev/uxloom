@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UXLoom documentation</title>
+<link rel="canonical" href="https://uxloom.dev/docs.html">
+<meta name="description" content="UXLoom documentation: quickstart, JourneyGraph format, critics and finding codes, implementation audit, release process.">
+<style>
+  :root { --ink:#0f1210; --ink-2:#141816; --line:#2a312c; --text:#e9e6dc; --dim:#a5a89c;
+          --thread:#d9a441; --thread-2:#7fb8a2;
+          --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+          --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+          --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--ink); color:var(--text); font:16px/1.65 var(--sans); display:flex; min-height:100vh; }
+  a { color:var(--thread); text-decoration:none; } a:hover { text-decoration:underline; }
+  nav { width:250px; flex-shrink:0; border-right:1px solid var(--line); padding:26px 20px; position:sticky; top:0; height:100vh; overflow-y:auto; }
+  nav .brand { font-family:var(--serif); font-size:19px; margin-bottom:2px; display:block; color:var(--text); }
+  nav .sub { color:var(--dim); font-size:12px; margin-bottom:20px; }
+  nav a.item { display:block; padding:5px 8px; border-radius:6px; font-size:14px; color:var(--dim); }
+  nav a.item:hover { background:var(--ink-2); color:var(--text); text-decoration:none; }
+  main { flex:1; max-width:820px; padding:34px 40px 80px; }
+  section { margin-bottom:56px; }
+  h2 { font-family:var(--serif); font-size:1.9rem; margin:18px 0 12px; }
+  h3 { font-family:var(--serif); font-size:1.35rem; margin:26px 0 8px; }
+  h4, h5 { margin:20px 0 6px; }
+  p, li, blockquote, td { color:var(--dim); }
+  p strong, li strong { color:var(--text); }
+  ul, ol { padding-left:1.4rem; margin:8px 0; } li { margin:4px 0; }
+  code { font-family:var(--mono); font-size:.87em; background:var(--ink-2); color:var(--thread-2); padding:1px 5px; border-radius:4px; }
+  pre { background:var(--ink-2); border:1px solid var(--line); border-radius:8px; padding:14px 16px; overflow-x:auto; margin:12px 0; }
+  pre code { background:none; padding:0; color:var(--text); }
+  blockquote { border-left:3px solid var(--thread); padding-left:12px; margin:10px 0; }
+  .tblwrap { overflow-x:auto; margin:12px 0; }
+  table { border-collapse:collapse; min-width:480px; }
+  td { border:1px solid var(--line); padding:7px 11px; font-size:14px; }
+  tr:first-child td { color:var(--text); font-weight:600; background:var(--ink-2); }
+  hr { border:none; border-top:1px solid var(--line); margin:22px 0; }
+  @media (max-width:800px){ body{flex-direction:column} nav{width:100%;height:auto;position:static} }
+</style>
+</head>
+<body>
+<nav>
+  <a class="brand" href="/">UXLoom</a>
+  <div class="sub">documentation — generated from the shipped sources</div>
+  <a class="item" href="#quickstart">Quickstart</a>
+  <a class="item" href="#format">JourneyGraph format</a>
+  <a class="item" href="#critics">Critics & finding codes</a>
+  <a class="item" href="#audit">Implementation audit</a>
+  <a class="item" href="#releasing">Release process</a>
+  <a class="item" href="#positioning">Positioning</a>
+  <a class="item" href="#rfc-0003">RFC 0003 — Company release</a>
+  <a class="item" href="#rfc-0004">RFC 0004 — Frontier release</a>
+</nav>
+<main>
+<section id="quickstart">
+<h2>UXLoom Quickstart</h2>
+<p><strong>What UXLoom is:</strong> the validation layer for UI/UX design. You (or your AI agent) design; UXLoom proves what's missing — unreachable screens, missing empty/loading/error states, WCAG contrast failures, undersized touch targets, labels that break under translation — before any code exists.</p>
+<p><strong>What UXLoom is not:</strong> it does not draw mockups or generate screens. It makes whatever designs your agent produces *complete and provable*. Think of it as the type-checker for UX.</p>
+<p><strong>Prerequisites:</strong> Node.js 20+. For the agent workflow: Claude Code, Codex CLI, or any MCP client. No account, no API key, MIT licensed.</p>
+<hr>
+<h3>Try it in 60 seconds (nothing to design yet)</h3>
+<pre><code>
+git clone https://github.com/uxloom-dev/uxloom &amp;&amp; cd uxloom
+npx uxloom check examples/shopmweb/uxloom.generated.project.json
+</code></pre>
+<p>You'll see 9 errors a UI generator left behind. Now check the repaired version — this is what "done" looks like:</p>
+<pre><code>
+npx uxloom check examples/shopmweb/uxloom.project.json
+</code></pre>
+<hr>
+<h3>Path A — design with Claude Code (the main workflow)</h3>
+<p><strong>1. Connect UXLoom</strong> — one command sets up everything (MCP config, agent skill, starter file):</p>
+<pre><code>
+cd your-project
+npx uxloom init
+</code></pre>
+<p>(Equivalent manual form: <code>claude mcp add uxloom -- npx -y uxloom</code>.)</p>
+<p><strong>2. Start Claude and ask for a design.</strong> Example first prompt:</p>
+<blockquote>Design the user journeys and screens for a habit-tracking mobile app</blockquote>
+<blockquote>(log habits, streaks, reminders) using UXLoom. Iterate until validation</blockquote>
+<blockquote>is clean.</blockquote>
+<p><strong>3. What happens next (and what's expected of you):</strong></p>
+<ul>
+<li>UXLoom interviews the agent through a structured brief. Claude answers</li>
+</ul>
+<p>  most questions from context; <strong>only taste questions reach you</strong> (brand   colors, tone). Claude reports the assumptions it made — correct any.</p>
+<ul>
+<li>Claude defines journeys (as state machines), registers screens with</li>
+</ul>
+<p>  state contracts, then runs validation and fixes findings until the   report is clean.</p>
+<ul>
+<li>You get <code>uxloom.project.json</code> in your project — <strong>commit it</strong>. That</li>
+</ul>
+<p>  file is the design contract, versioned next to the code it specifies.</p>
+<p><strong>4. Build from the contract.</strong> The design now drives implementation:</p>
+<blockquote>Implement the HabitListScreen as a React component. Cover every state</blockquote>
+<blockquote>in its uxloom contract: default, empty, loading, error.network.</blockquote>
+<p><strong>5. Change safely.</strong> Any future request ("add a social sharing journey") goes through the same loop — validation catches what the change broke.</p>
+<h4>See the design — live wireframe mocks</h4>
+<pre><code>
+npx uxloom preview        # opens live mocks at http://localhost:4400
+</code></pre>
+<p>Every screen and every contracted state rendered as wireframes (loading skeletons, empty placeholders, error banners appear automatically), on desktop/tablet/mobile frames, with clickable journey events. Keep it open while your agent designs — it updates in real time.</p>
+<h4>Verify any time, without the agent</h4>
+<pre><code>
+npx uxloom check          # design completeness, exit 1 on errors
+npx uxloom audit          # does the code implement the contract? exit 1 on drift
+</code></pre>
+<h3>Path B — Codex CLI</h3>
+<pre><code>
+codex mcp add uxloom -- npx -y uxloom
+</code></pre>
+<p>Same workflow. The skill ships in the npm package (<code>skills/uxloom/</code>) — copy it to <code>.agents/skills/</code> for best results.</p>
+<h4>Share it — stakeholders need a link, not npx</h4>
+<pre><code>
+npx uxloom export         # writes uxloom-preview.html — email it, host it
+</code></pre>
+<h4>Design changes in PRs — readable, not JSON walls</h4>
+<pre><code>
+npx uxloom diff --git main            # semantic diff vs main
+npx uxloom diff old.json new.json --markdown   # PR-comment ready
+</code></pre>
+<h4>Native apps too</h4>
+<p>The audit reads native markers: add <code>// data-ux-screen: X</code> and <code>// data-ux-state: y</code> comments (any language), or use <code>.accessibilityIdentifier("ux-state:y")</code> in SwiftUI / <code>Modifier.testTag("ux-state:y")</code> in Compose. With optional playwright (<code>npm i -D playwright</code>), <code>npx uxloom audit --live http://localhost:3000</code> verifies markers in the real DOM, and <code>npx uxloom export --png shots/</code> renders every screen×state to images. <code>npx uxloom export --svg mocks/</code> needs nothing extra — the SVGs import straight into Figma or Penpot.</p>
+<h4>Designers: comment directly on the mocks</h4>
+<p>In <code>npx uxloom preview</code>, toggle comment mode and click anywhere on a screen to leave feedback. Open comments appear in <code>uxloom check</code> as <code>reviewer-comment</code> warnings — your feedback enters the agent's fix loop, and you resolve it in the preview when it's addressed.</p>
+<p><strong>Or edit directly</strong>: toggle edit mode (✎) to reorder blocks, rewrite copy and labels inline, add/remove blocks, and adjust design tokens — every change writes to the same project file your agent works from, validated before saving, live for every viewer.</p>
+<h3>Path C — CI gate (no agent involved)</h3>
+<pre><code>
+# .github/workflows/design.yml
+- run: npx uxloom check uxloom.project.json --github
+- run: npx uxloom audit uxloom.project.json --github
+</code></pre>
+<p>Inline PR annotations via <code>--github</code>; <code>--sarif</code> for code scanning; <code>--json</code> for anything else. <strong>Adopting on an existing app?</strong> Run <code>npx uxloom check --update-baseline</code> once — existing findings are frozen as acknowledged debt and only new drift fails the build.</p>
+<hr>
+<h3>The rules that make it work</h3>
+<ul>
+<li><strong>Every screen belongs to a journey.</strong> No orphan screens; flows first.</li>
+<li><strong>Contracts are honest.</strong> Every screen needs empty/loading/error states</li>
+</ul>
+<p>  in <code>requiredStates</code> — or a written exemption when a state genuinely   can't apply (a confirmation screen has no empty state). Findings can't   be silenced by weakening the contract; UXLoom flags that too.</p>
+<ul>
+<li><strong>Zero errors is the exit condition.</strong> <code>uxloom check</code> exits 1 otherwise.</li>
+</ul>
+<h3>Troubleshooting</h3>
+<div class="tblwrap"><table><tbody>
+<tr><td>Symptom</td><td>Fix</td></tr>
+<tr><td><code>no project file at ...</code></td><td>Run from the directory containing <code>uxloom.project.json</code>, pass a path, or set <code>UXLOOM_PROJECT</code></td></tr>
+<tr><td>Agent designs screens without UXLoom</td><td>Say "use UXLoom" explicitly, or install the skill from the npm package's <code>skills/</code> folder</td></tr>
+<tr><td>Findings feel noisy on a screen</td><td>Don't delete required states — add an <code>exemptions</code> entry with a written reason</td></tr>
+</tbody></table></div>
+<p>Full format and finding reference: <a href="https://github.com/uxloom-dev/uxloom/blob/main/packages/mcp-server/skills/uxloom/references/">packages/mcp-server/skills/uxloom/references/</a></p>
+</section>
+<section id="format">
+<h2>JourneyGraph format reference (v0.1)</h2>
+<h3>Contents</h3>
+<ul>
+<li>Modeling conventions (screens vs states)</li>
+<li>Project shape</li>
+<li>Journeys and target refs</li>
+<li>Screens, contracts, and components</li>
+<li>Exemptions</li>
+<li>Validation rules the schema enforces</li>
+</ul>
+<h3>Modeling conventions (screens vs states)</h3>
+<p>Consistent granularity keeps designs comparable and critics meaningful:</p>
+<ul>
+<li><strong>A screen is a destination</strong> — a page, route, or full view a user lands on.</li>
+<li><strong>A state is a condition of that destination</strong> — modals, drawers, tabs,</li>
+</ul>
+<p>  panels, confirmation dialogs, and transient conditions are screen states,   not separate screens. Examples: <code>create</code> (a creation modal on a list   screen), <code>key.issued-once</code> (a shown-once panel), <code>remove-confirm</code> (a   typed-confirmation dialog), <code>identity.pending</code> (an auto-refreshing tab   condition).</p>
+<ul>
+<li><strong>Dot-namespace variants</strong>: <code>error.network</code>, <code>error.validation</code>,</li>
+</ul>
+<p>  <code>create.error.slug-taken</code> — the family prefix is what exemptions like   <code>error.any</code> match on.</p>
+<ul>
+<li><strong>Journeys end.</strong> Every journey needs at least one <code>final</code> state — for</li>
+</ul>
+<p>  browse/manage journeys, the state where the user's goal is satisfied is   final even if it has outgoing events.</p>
+<h3>Project shape</h3>
+<pre><code>
+{
+  "name": "shopfast",
+  "formatVersion": "0.1",
+  "platforms": ["web", "mweb", "ios", "android"],
+  "journeys": [ ... ],
+  "screens": [ ... ]
+}
+</code></pre>
+<p>Stored at <code>uxloom.project.json</code> (override with <code>UXLOOM_PROJECT</code> env var). Plain JSON, versioned in git next to the code it specifies.</p>
+<h3>Journeys and target refs</h3>
+<p>A journey is a state machine. States reference screens; events move between states.</p>
+<pre><code>
+{
+  "id": "checkout",
+  "goal": "Returning shopper completes purchase in under 90 seconds",
+  "entry": "cart",
+  "states": {
+    "cart":    { "screen": "CartScreen",
+                 "on": { "CHECKOUT": "payment", "CART_EMPTY": "cart#empty" } },
+    "payment": { "screen": "PaymentScreen",
+                 "on": { "PAY": "confirm",
+                         "CARD_DECLINED": "payment#error.declined",
+                         "BACK": "cart" } },
+    "confirm": { "screen": "ConfirmScreen", "final": true }
+  }
+}
+</code></pre>
+<p><strong>Target refs</strong>: <code>"payment"</code> targets a journey state; <code>"payment#error.declined"</code> targets that state landing on a specific screen state. The screen state after <code>#</code> must be in the target screen's requiredStates or validation fails.</p>
+<p><strong>State ids</strong>: <code>[a-zA-Z][\w-]*</code> with optional dot-separated substates (<code>error.network</code>, <code>error.declined</code>).</p>
+<h3>Screens, contracts, and components</h3>
+<pre><code>
+{
+  "id": "PaymentScreen",
+  "intent": "Collect payment with minimum anxiety",
+  "requiredStates": ["default", "loading", "error.declined", "error.network"],
+  "designedStates": ["default", "loading"],
+  "platforms": ["mweb", "android"],
+  "components": [
+    {
+      "semantic": "Button.Primary",
+      "interactive": true,
+      "minTargetPx": 48,
+      "label": { "key": "checkout.pay", "en": "Pay now", "maxChars": 16 },
+      "fg": "#FFFFFF",
+      "bg": "#1D4ED8"
+    }
+  ],
+  "exemptions": [
+    { "state": "empty", "reason": "Payment form has no data-list to be empty." }
+  ]
+}
+</code></pre>
+<ul>
+<li><code>requiredStates</code> is the contract (what production needs); <code>designedStates</code></li>
+</ul>
+<p>  is progress (what exists so far). Validation errors on every gap.</p>
+<ul>
+<li><code>platforms</code> defaults to the project's platforms when omitted.</li>
+<li><code>semantic</code> names a role (<code>Button.Primary</code>, <code>List.Selectable</code>, <code>Nav.Tabs</code>) —</li>
+</ul>
+<p>  never pixels or specific markup.</p>
+<ul>
+<li>Give <code>fg</code>/<code>bg</code> to every text-bearing component, <code>minTargetPx</code> to every</li>
+</ul>
+<p>  interactive one, and <code>maxChars</code> to every space-constrained label — the   critics can only check what is declared.</p>
+<h3>Exemptions</h3>
+<p>An exemption documents why a baseline state (empty / loading / error.*) does not apply to a screen. The reason must be a real sentence (min 15 chars, schema-enforced). <code>"error.any"</code> (any <code>error</code>-prefixed state) exempts the error family. An exemption for a state that is also in requiredStates is flagged as contradictory.</p>
+<h3>Rich transitions, tokens, content, and team-scale features (v0.6)</h3>
+<p><strong>Guards and roles</strong> — transitions accept an object form when a condition or role matters:</p>
+<pre><code>
+"on": {
+  "DELETE": { "target": "confirm", "guard": "user.canDelete", "roles": ["admin"] },
+  "BACK": "list"
+}
+</code></pre>
+<p><strong>Platform-scoped journeys</strong> — divergent mobile/desktop flows are separate journeys with <code>"platforms": ["mweb"]</code> on the journey.</p>
+<p><strong>Design tokens</strong> — project-level <code>tokens</code> theme the preview and document the system: <code>{ "colors": { "accent": "#2F6B52", "bg": "#FAF9F6", "surface": "#FFFFFF", "text": "#2B2725", "muted": "#7A716B" }, "radius": 8, "font": "Iowan Old Style, serif" }</code>. Verify pairs with uxloom:palette_check.</p>
+<p><strong>Content-rich blocks</strong> — table blocks take <code>columns: ["Recipient", "Status", "Sent"]</code>; text/hero blocks take <code>copy</code> (real copy, not lorem); any block takes <code>source</code> naming its data binding. Screens take <code>data</code> (<code>{ "messages": "Message[]", "filter": "StatusFilter" }</code>) so implementers know the shape.</p>
+<p><strong>Fragments (team scale)</strong> — the base file may declare <code>"include": ["designs/*.json"]</code>; fragment files are <code>{ "journeys": [...], "screens": [...] }</code> merged at load. Duplicate ids across files are errors. MCP tools write to the base file; fragments are edited as files.</p>
+<p><strong>Config and baseline</strong> — <code>uxloom.config.json</code> overrides thresholds (<code>{ "thresholds": { "contrastRatio": 7, "expansionFactor": 1.5, "touchTargets": { "web": 44 } } }</code>). <code>uxloom check --update-baseline</code> freezes existing findings into <code>uxloom.baseline.json</code> (brownfield adoption: block only new drift). Never baseline findings you can fix now.</p>
+<p><strong>Reviewer comments</strong> — designers drop comments in the preview; open comments appear in validation as <code>reviewer-comment</code> warnings. Address the feedback, then resolve the comment in the preview. Never resolve without addressing.</p>
+<h3>Validation rules the schema enforces</h3>
+<ul>
+<li>Unknown fields are rejected (strict schemas) — a typo fails loudly instead</li>
+</ul>
+<p>  of silently dropping data.</p>
+<ul>
+<li>Colors are hex (<code>#RGB</code> or <code>#RRGGBB</code>); platforms are one of</li>
+</ul>
+<p>  <code>web | mweb | ios | android</code>; requiredStates is non-empty.</p>
+</section>
+<section id="critics">
+<h2>Critics reference — finding codes, thresholds, and how to fix each</h2>
+<h3>Contents</h3>
+<ul>
+<li>journey-completeness (6 error codes)</li>
+<li>state-coverage (2 errors, 2 warnings, exemption policy)</li>
+<li>wcag-contrast</li>
+<li>touch-targets</li>
+<li>text-expansion</li>
+<li>Severity policy</li>
+</ul>
+<h3>journey-completeness</h3>
+<p>Structural proofs over every journey. All findings are errors.</p>
+<div class="tblwrap"><table><tbody>
+<tr><td>Code</td><td>Meaning</td><td>Fix</td></tr>
+<tr><td><code>entry-missing</code></td><td>entry names an undefined state</td><td>add the state or change entry</td></tr>
+<tr><td><code>screen-missing</code></td><td>state references an unregistered screen</td><td>register the screen</td></tr>
+<tr><td><code>target-missing</code></td><td>event targets an undefined state</td><td>add the state or retarget</td></tr>
+<tr><td><code>target-state-missing</code></td><td><code>state#screenState</code> ref where screenState is not in the target screen's requiredStates</td><td>add it to requiredStates</td></tr>
+<tr><td><code>dead-end</code></td><td>non-final state with no outgoing events</td><td>mark final or add events (incl. BACK/CANCEL)</td></tr>
+<tr><td><code>unreachable</code></td><td>state no user can ever arrive at (BFS from entry)</td><td>add a transition to it or remove it</td></tr>
+<tr><td><code>no-final-state</code></td><td>journey can never complete</td><td>mark at least one state final</td></tr>
+</tbody></table></div>
+<h3>state-coverage</h3>
+<p>The anti-happy-path critic.</p>
+<div class="tblwrap"><table><tbody>
+<tr><td>Code</td><td>Severity</td><td>Meaning</td></tr>
+<tr><td><code>state-undesigned</code></td><td>error</td><td>requiredState with no design yet</td></tr>
+<tr><td><code>contract-drift</code></td><td>warning</td><td>designed state missing from the contract</td></tr>
+<tr><td><code>happy-path-contract</code></td><td>warning</td><td>contract lacks empty/loading/error.* without exemption</td></tr>
+<tr><td><code>contradictory-exemption</code></td><td>warning</td><td>state both exempted and required</td></tr>
+</tbody></table></div>
+<p><strong>Exemption policy</strong>: suppressing <code>happy-path-contract</code> requires a written reason per state (or <code>error.any</code> for the error family). Legitimate examples: terminal confirmation screens (no empty state), blank-by-definition forms (no empty state), static instruction screens (no loading). Illegitimate: "not needed", "later", any reason under 15 characters (schema rejects).</p>
+<h3>wcag-contrast</h3>
+<p><code>contrast-below-aa</code> (error): components declaring both <code>fg</code> and <code>bg</code> are checked against WCAG 2.2 AA for normal text — <strong>4.5:1</strong> minimum, computed via relative luminance. Fix by darkening/lightening either side. Large-text (3:1) allowance is not yet modeled; when a component is genuinely large display text, note it and pick colors meeting 4.5:1 anyway.</p>
+<h3>touch-targets</h3>
+<p><code>target-too-small</code> (error): interactive components with <code>minTargetPx</code> are checked per platform the screen ships on:</p>
+<div class="tblwrap"><table><tbody>
+<tr><td>Platform</td><td>Minimum</td><td>Source</td></tr>
+<tr><td>ios</td><td>44</td><td>iOS HIG 44pt</td></tr>
+<tr><td>android</td><td>48</td><td>Material 48dp</td></tr>
+<tr><td>mweb</td><td>44</td><td>recommended touch web</td></tr>
+<tr><td>web</td><td>24</td><td>WCAG 2.2 target-size AA</td></tr>
+</tbody></table></div>
+<p>The target includes padding/hit-slop, not just the visible glyph.</p>
+<h3>text-expansion</h3>
+<p><code>label-overflow</code> (warning): labels with <code>maxChars</code> are checked at ×1.4 — the standard pseudo-localization planning factor (German/Finnish run 30–40% longer than English for UI-length strings). Fix by shortening the English source or widening the layout budget.</p>
+<h3>Severity policy</h3>
+<ul>
+<li><strong>error</strong> = provably broken for users; blocks (CLI exits 1; validation loop</li>
+</ul>
+<p>  must not stop while any remain).</p>
+<ul>
+<li><strong>warning</strong> = judgment call surfaced; resolve it or exempt it with a</li>
+</ul>
+<p>  reason — never ignore it silently.</p>
+</section>
+<section id="audit">
+<h2>Implementation audit — drift detection between contract and code</h2>
+<h3>Contents</h3>
+<ul>
+<li>What the audit proves</li>
+<li>The marker convention (how to make code self-auditing)</li>
+<li>Native platforms (Swift / Kotlin / Dart / Java)</li>
+<li>The registry (uxloom.map.json)</li>
+<li>Verdicts and finding codes</li>
+<li>Marker quality (anti-washing)</li>
+<li>Workflow for agents</li>
+</ul>
+<h3>What the audit proves</h3>
+<p><code>uxloom:project_audit</code> (or <code>npx uxloom audit</code>) checks whether the implementation actually contains each contracted screen state. Static analysis is honest about its limits: a state earns <strong>implemented</strong> only with marker evidence (file:line); files without markers yield <strong>unproven</strong>, never a false pass.</p>
+<h3>The marker convention</h3>
+<p>When implementing a screen from the contract, mark where each state renders — any framework, zero runtime cost:</p>
+<pre><code>
+&lt;main data-ux-screen="MessageDetail"&gt;
+  {isLoading &amp;&amp; &lt;Skeleton data-ux-state="loading" /&gt;}
+  {error &amp;&amp; &lt;ErrorPanel data-ux-state="error.network" onRetry={retry} /&gt;}
+  {message?.status === "parked" &amp;&amp; &lt;ParkedNotice data-ux-state="parked" /&gt;}
+  {message &amp;&amp; &lt;Timeline data-ux-state="default" events={message.events} /&gt;}
+&lt;/main&gt;
+</code></pre>
+<ul>
+<li><code>data-ux-screen="&lt;ScreenId&gt;"</code> once per screen component — it also maps</li>
+</ul>
+<p>  the file without needing a registry entry.</p>
+<ul>
+<li><code>data-ux-state="&lt;state&gt;"</code> on the element that renders each contracted</li>
+</ul>
+<p>  state, exactly matching the contract's state ids.</p>
+<h3>Native platforms (Swift / Kotlin / Dart / Java)</h3>
+<p>The audit scans <code>.swift</code>, <code>.kt</code>, <code>.kts</code>, <code>.dart</code>, and <code>.java</code> sources too. Since native UI has no HTML attributes, three marker forms are recognized — all equal-weight tier-2 evidence, same verdicts, same file:line:</p>
+<p><strong>1. Attribute form</strong> (web, shown above): <code>data-ux-screen="X"</code> / <code>data-ux-state="y"</code>.</p>
+<p><strong>2. Native identifiers</strong> — piggyback on the accessibility/test hooks you should be setting anyway:</p>
+<p>SwiftUI:</p>
+<pre><code>
+VStack {
+  Text("Inbox").accessibilityIdentifier("ux-screen:Inbox")
+  if isLoading {
+    ProgressView().accessibilityIdentifier("ux-state:loading")
+  }
+  List(rows) { RowView($0) }.accessibilityIdentifier("ux-state:default")
+}
+</code></pre>
+<p>Jetpack Compose:</p>
+<pre><code>
+// data-ux-screen: Inbox
+@Composable
+fun InboxScreen(state: UiState) {
+  when (state) {
+    UiState.Loading -&gt; Spinner(Modifier.testTag("ux-state:loading"))
+    UiState.Empty -&gt; EmptyCard(Modifier.testTag("ux-state:empty"))
+    else -&gt; MessageList(Modifier.testTag("ux-state:default"))
+  }
+}
+</code></pre>
+<p><strong>3. Comment form</strong> — works in any language (Dart, Java, or anywhere an identifier can't be attached). <code>//</code> and single-line <code>/* ... */</code> are both recognized; whitespace around the <code>:</code> is tolerated:</p>
+<pre><code>
+// data-ux-screen: Profile
+Widget build(BuildContext context) {
+  if (loading) {
+    return Spinner(); // data-ux-state: loading
+  }
+  return ProfileBody(); // data-ux-state: default
+}
+</code></pre>
+<p>Comment markers are <strong>declaration-grade evidence</strong>: they assert where a state renders but, unlike an attribute on an element, they cannot prove anything about the element itself — so the thin-marker check does not apply to them (nor to identifier markers). Live verification (the DOM tier) is the stronger tier when you need proof beyond declaration. The static-render check still applies to all forms: an unconditional <code>loading</code>/<code>empty</code>/<code>error*</code> marker is challenged whatever its spelling.</p>
+<h3>The registry (uxloom.map.json)</h3>
+<p>For files that can't carry a screen marker (or to scope shared files), map screens to path globs next to the project file:</p>
+<pre><code>
+{
+  "MessageDetail": { "paths": ["app/dashboard/messages/[id]/**", "components/messages/*"] }
+}
+</code></pre>
+<p>Globs support <code>**</code> and <code>*</code>. A screen with neither markers nor matching registry paths is an error — it has no implementation at all.</p>
+<h3>Verdicts and finding codes</h3>
+<div class="tblwrap"><table><tbody>
+<tr><td>Code</td><td>Severity</td><td>Meaning</td></tr>
+<tr><td><code>screen-unmapped</code></td><td>error</td><td>no files at all for a contracted screen</td></tr>
+<tr><td><code>state-unimplemented</code></td><td>error</td><td>screen uses markers, this state has none</td></tr>
+<tr><td><code>state-unproven</code></td><td>warning</td><td>files exist but carry no markers — nothing verifiable</td></tr>
+</tbody></table></div>
+<h3>Marker quality (anti-washing)</h3>
+<p>A marker on an empty element proves nothing — "marker washing" is pasting <code>data-ux-state</code> attributes to turn verdicts green without implementing the states. Tier 2.5 runs static marker-quality heuristics that challenge suspicious markers. <strong>Heuristics challenge evidence, they never grant it</strong>: every check emits a warning with file:line evidence and never upgrades a verdict. They are conservative — when the source is ambiguous they stay silent.</p>
+<div class="tblwrap"><table><tbody>
+<tr><td>Code</td><td>Severity</td><td>Triggered when</td></tr>
+<tr><td><code>state-marker-thin</code></td><td>warning</td><td>the marker sits on a bare element that renders nothing: self-closing (<code>&lt;div data-ux-state="empty" /&gt;</code>) or closing immediately with only whitespace inside, with no other props (no className, no children, no bindings). Attribute form only — comment and identifier markers cannot prove element emptiness, so they are never flagged thin</td></tr>
+<tr><td><code>state-marker-duplicate</code></td><td>warning</td><td>one element carries several <code>data-ux-state</code> attributes, or two different states are marked on textually identical bare elements in the same file — one element cannot render two distinct states distinctly; each state is flagged once. Attribute form only, for the same reason as thin</td></tr>
+<tr><td><code>state-marker-static</code></td><td>warning</td><td>a conditional-by-nature state (<code>loading</code>, <code>empty</code>, or any <code>error*</code>) has no conditional-rendering signal (<code>&amp;&amp;</code>, ternary/<code>?:</code>, <code>if</code>, <code>guard</code>, <code>switch</code>, <code>when</code>, <code>.let</code>, <code>v-if</code>, <code>*ngIf</code>, <code>{#if</code>, <code>.map(</code>, optional chaining) on its line or the 3 lines above — the state is likely always- or never-rendered. Applies to all three marker forms. Not applied to <code>default</code> or custom states, and suppressed inside components named after the state (e.g. <code>function LoadingSkeleton</code>, <code>struct LoadingView</code>, <code>fun EmptyState</code>, <code>class ErrorBanner</code>), where the conditional lives at the call site</td></tr>
+</tbody></table></div>
+<p>Fixing the warnings is always the same move: render the real state UI inside (or as) the marked element, gated by the condition that actually produces the state — never relocate the marker to silence the check. Static heuristics narrow washing; they cannot eliminate it — fixture and browser tiers (4–5) remain future work.</p>
+<h3>Workflow for agents</h3>
+<ol>
+<li>When <strong>implementing</strong> from a contract: emit markers as you build each</li>
+</ol>
+<p>   state — the code becomes self-auditing for free.</p>
+<ol>
+<li>When <strong>auditing</strong> an existing codebase: run uxloom:project_audit; for</li>
+</ol>
+<p>   unproven screens, read the code, add markers where states genuinely    render, re-run. States you cannot mark truthfully are your gap list.</p>
+<ol>
+<li>In CI: <code>npx uxloom check &amp;&amp; npx uxloom audit</code> — design completeness</li>
+</ol>
+<p>   and implementation fidelity, both gated on exit codes.</p>
+</section>
+<section id="releasing">
+<h2>Releasing — the surface-sync contract</h2>
+<p>Every capability change must reach every applicable surface. Nobody remembers this manually; the machine enforces it. This document is the map of surfaces and the process that keeps them coherent.</p>
+<h3>The principle</h3>
+<p>Same philosophy as the product: <strong>single source of truth, deterministic checks, CI gates.</strong> The source of truth for the tool list is the running MCP server (introspected, not grepped); for the version it is <code>packages/mcp-server/package.json</code>. Everything else is either *derived* (never hand-edited) or *enforced* (CI fails with the exact fix).</p>
+<h3>Surfaces</h3>
+<div class="tblwrap"><table><tbody>
+<tr><td>Surface</td><td>Sync mechanism</td></tr>
+<tr><td>serverInfo version (<code>server.ts</code>)</td><td><strong>Derived</strong> — read from package.json at runtime</td></tr>
+<tr><td>npm packages</td><td><strong>Automated</strong> — release pipeline publishes unpublished versions with provenance</td></tr>
+<tr><td>MCP registry (<code>server.json</code>)</td><td><strong>Enforced</strong> — consistency check requires version match; release-prep bumps it</td></tr>
+<tr><td>GitHub release + benchmark scorecard</td><td><strong>Automated</strong> — release pipeline</td></tr>
+<tr><td>Website version badge, copy</td><td><strong>Enforced</strong> — badge must match major.minor; stale claims ("pre-release", "coming soon") are banned; release-prep stamps the badge</td></tr>
+<tr><td><code>docs/llms.txt</code> tool list</td><td><strong>Enforced</strong> — must list every real tool</td></tr>
+<tr><td>READMEs (root + packages)</td><td><strong>Enforced</strong> — tool table complete; CLI commands must exist; no rotting tool counts</td></tr>
+<tr><td>Agent skill (<code>skills/uxloom/</code>)</td><td><strong>Enforced</strong> — may never reference a nonexistent tool; ships inside the npm package so it versions atomically</td></tr>
+<tr><td>Benchmark claims</td><td><strong>Enforced</strong> — bench runs on every push against a committed baseline; scorecard regenerated per release</td></tr>
+<tr><td>Glama listing</td><td><strong>External, self-syncing</strong> — unpinned commit means their builds track main; after a significant release, optionally press Build &amp; Release in the Glama admin to refresh their release object</td></tr>
+<tr><td>awesome-mcp-servers entry</td><td><strong>External, manual</strong> — keep the entry <strong>evergreen</strong> (no version numbers, no tool counts); it should only need touching if positioning changes</td></tr>
+</tbody></table></div>
+<h3>The release flow (three commands)</h3>
+<pre><code>
+node tools/release-prep.mjs 0.4.0   # bumps every surface, runs build+tests+consistency+bench
+git add -A &amp;&amp; git commit -m "Release v0.4.0: &lt;what changed&gt;" &amp;&amp; git push
+git tag v0.4.0 &amp;&amp; git push origin v0.4.0   # pipeline: npm + registry + release w/ scorecard
+</code></pre>
+<h3>The standing gates (every push, not just releases)</h3>
+<p>CI runs typecheck → tests → <strong>surface consistency</strong> → <strong>benchmark vs baseline</strong>. A PR that adds a tool without documenting it, documents a CLI command that doesn't exist, leaves a stale claim, or degrades a benchmark grade <strong>cannot merge</strong>. The failure message names the surface and the fix.</p>
+<h3>Writing rules that prevent drift at the source</h3>
+<ul>
+<li><strong>Never hardcode</strong>: versions, tool counts, or dates in prose. Say</li>
+</ul>
+<p>  "the tools" not "the 12 tools" — numbers rot, the checker bans them.</p>
+<ul>
+<li><strong>New tool checklist</strong> (enforced, listed here for humans): register in</li>
+</ul>
+<p>  <code>server.ts</code> → row in <code>packages/mcp-server/README.md</code> → name in   <code>docs/llms.txt</code> → skill reference if agents should use it → test.</p>
+<ul>
+<li><strong>New CLI command</strong>: implement in <code>cli.ts</code> usage → QUICKSTART → README.</li>
+<li><strong>Copy states facts, not futures</strong>: "lands soon" phrasing is banned by</li>
+</ul>
+<p>  the checker because futures become lies silently.</p>
+</section>
+<section id="positioning">
+<h2>UXLoom positioning</h2>
+<h3>The USP, in one sentence</h3>
+<p><strong>UXLoom is the only design tool where "done" is provable — deterministic design contracts that make UI completeness a CI-gateable fact instead of an opinion.</strong></p>
+<h3>The pain, with numbers</h3>
+<ul>
+<li>Design errors drive ~68% of rework cost; fixing a problem after shipping</li>
+</ul>
+<p>  costs ~30× what it costs at design time. 62% of developers report redoing   UI work due to design/communication gaps; a single product pod loses on   the order of $300k/year to handoff inefficiency.</p>
+<ul>
+<li>AI generation made this worse, not better: generators produce happy-path</li>
+</ul>
+<p>  screens at unprecedented volume, so <strong>verification — not generation — is   now the bottleneck</strong>. Nothing in the market proves what generated UI is   missing.</p>
+<ul>
+<li>83% of designers report design/code divergence; 26% see it on every</li>
+</ul>
+<p>  project. There is no artifact both sides can hold each other to.</p>
+<h3>Why every alternative fails this specific job</h3>
+<div class="tblwrap"><table><tbody>
+<tr><td>Alternative</td><td>Why it can't do this job</td></tr>
+<tr><td>Figma / Penpot / canvas tools</td><td>Store pictures of decisions; a frame doesn't know its error state is missing and can't fail a build</td></tr>
+<tr><td>v0 / Lovable / Figma Make / generators</td><td>Produce the happy path; they are the reason the gap exists, not the check on it</td></tr>
+<tr><td>"Ask the LLM to review the design"</td><td>Non-deterministic: different answer every run, so it can never gate CI; findings are opinions without codes, locations, or fixes</td></tr>
+<tr><td>Accessibility linters (axe, Stark)</td><td>Check rendered output late, in QA; nothing exists at design time, and nothing covers journey completeness or state coverage at all</td></tr>
+</tbody></table></div>
+<h3>The three properties that make the moat</h3>
+<ol>
+<li><strong>Design as data (JourneyGraph).</strong> Journeys are state machines, screens</li>
+</ol>
+<p>   carry contracts, everything lives in git next to the code. Diffable,    reviewable, agent-native.</p>
+<ol>
+<li><strong>Deterministic critics.</strong> Same input, byte-identical report (benchmarked:</li>
+</ol>
+<p>   SHA-256-stable across processes). This single property is what turns    design quality from a review comment into a merge gate.</p>
+<ol>
+<li><strong>Honesty mechanics.</strong> Exemptions-with-reasons and happy-path-contract</li>
+</ol>
+<p>   detection mean the score can't be gamed by weakening the contract — the    failure mode of every checklist tool.</p>
+<h3>Proof points (benchmarked, reproducible: <code>packages/bench</code>)</h3>
+<ul>
+<li>Critic precision 1.000 / recall 1.000 against a 13-defect seeded catalog</li>
+<li>Byte-identical reports across 25 runs and independent processes</li>
+<li>1000-screen project validated in under 5ms; CLI cold start under 100ms</li>
+<li>500 fuzzed inputs, zero crashes — malformed data fails loudly, never silently</li>
+</ul>
+<h3>Message hierarchy</h3>
+<ol>
+<li>"Your generator gave you 6 screens. UXLoom proves you're missing 9 states."</li>
+<li>"The happy path is not a product."</li>
+<li>"Deterministic, so it can gate CI — an LLM opinion can't."</li>
+<li>"Zero findings is reachable honestly: exempt with a reason, never silently."</li>
+</ol>
+</section>
+<section id="rfc-0003">
+<h2>RFC 0003 — The company release (v0.6.0)</h2>
+<p><strong>Status:</strong> Shipping · <strong>Source:</strong> external-reviewer critique (2026-08-08)</p>
+<p>Every drawback from the review maps to a requirement below. Requirements are grouped into three independent build lanes with strict file ownership.</p>
+<h3>R1 — Brownfield adoption: baseline + config  *(review §6, ranked #1)*</h3>
+<ul>
+<li><code>uxloom.config.json</code> next to the project file: configurable thresholds</li>
+</ul>
+<p>  (contrast ratio, localization expansion factor, per-platform touch-target   minimums). Defaults unchanged. Unknown keys rejected.</p>
+<ul>
+<li><code>uxloom.baseline.json</code>: fingerprinted findings (check and audit sections)</li>
+</ul>
+<p>  that are acknowledged debt. Baselined findings are reported as a count,   never fail the run. <code>--update-baseline</code> freezes current findings.   The ESLint/Ruff adoption model: freeze today's debt, block only new drift.</p>
+<h3>R2 — Themed preview + shareable export  *(review §1/§10, ranked #2)*</h3>
+<ul>
+<li>Project-level <code>tokens</code> (colors: accent/bg/surface/text/muted, radius,</li>
+</ul>
+<p>  font): the preview applies them — branded mocks, not gray boxes, the   moment the design system is declared. Absent tokens → current wireframe.</p>
+<ul>
+<li><code>uxloom export [file] [--out path]</code>: one self-contained static HTML file</li>
+</ul>
+<p>  (embedded data, no server) — email it, host it, put it in a deck.   Stakeholders need a link, not npx.</p>
+<h3>R3 — Designer feedback loop  *(review §2, ranked #3)*</h3>
+<ul>
+<li>Comment mode in the preview: click a location on any screen/state, leave</li>
+</ul>
+<p>  a note; pins render on the mock; comments persist to   <code>&lt;project&gt;.comments.json</code>; resolve from the UI.</p>
+<ul>
+<li>Open comments surface in <code>uxloom check</code> as <code>reviewer-comment</code> warnings —</li>
+</ul>
+<p>  designer feedback enters the same loop agents already iterate on.   Designers become participants with veto power, not spectators.</p>
+<h3>R4 — CI-native reporters  *(review §7, ranked #4)*</h3>
+<ul>
+<li><code>check</code> and <code>audit</code> gain <code>--json</code> (stable machine schema), <code>--sarif</code></li>
+</ul>
+<p>  (SARIF 2.1.0 for GitHub code scanning), <code>--github</code> (workflow-command   annotations). Human output unchanged by default.</p>
+<h3>R5 — Anti-marker-washing (audit tier 2.5)  *(review §5, ranked #5)*</h3>
+<ul>
+<li>Static marker-quality analysis: thin markers (element carries the marker</li>
+</ul>
+<p>  and nothing else), duplicate markers (one element claiming states it   cannot distinguish), statically-rendered "conditional" states (marker not   under any conditional rendering signal). Heuristics report warnings with   evidence — they never upgrade a verdict, only challenge one. Honest   labels: this narrows washing; tiers 4–5 (fixture/browser) remain future.</p>
+<h3>R6 — Richer content contracts  *(review §3, ranked #6)*</h3>
+<ul>
+<li>Blocks gain <code>columns</code> (tables), <code>copy</code> (real text, not just labels),</li>
+</ul>
+<p>  <code>source</code> (named data binding). Screens gain <code>data</code> (named field→type   shape). The contract now carries what implementers actually fight about.</p>
+<h3>R7 — Flows that match reality + team-scale format  *(review §6/§11, #7)*</h3>
+<ul>
+<li>Transitions accept object form <code>{ target, guard?, roles? }</code> — conditions</li>
+</ul>
+<p>  and role-variants are expressible and render in the preview.</p>
+<ul>
+<li>Journeys accept <code>platforms</code> — divergent mobile/desktop flows are separate</li>
+</ul>
+<p>  journeys scoped honestly.</p>
+<ul>
+<li><code>include</code> globs in the project file merge fragment files</li>
+</ul>
+<p>  (<code>{journeys?, screens?}</code>) — teams split the design across files; duplicate   ids across files are errors; MCP writes go to the base file.</p>
+<h3>Explicitly deferred (recorded, not hidden)</h3>
+<p>From the review's broader sections, consciously open after v0.6:</p>
+<ul>
+<li><strong>Figma/Penpot bridge, drag-editing canvas</strong> — designers can now review</li>
+</ul>
+<p>  with veto power (comments); authoring remains agent/file-driven</p>
+<ul>
+<li><strong>PNG/PDF export</strong> — needs a browser dependency; static HTML covers</li>
+</ul>
+<p>  sharing today</p>
+<ul>
+<li><strong>Audit tiers 4–5</strong> (fixture rendering, browser verification) and</li>
+</ul>
+<p>  <strong>native-platform audit</strong> (SwiftUI/Compose markers) — tier 2.5   heuristics narrow washing on web; native audit needs per-platform   runners</p>
+<ul>
+<li><strong>Accessibility breadth</strong> (focus order, keyboard navigation, motion) —</li>
+</ul>
+<p>  today's critics cover contrast + target size; broader WCAG modeling is   a design problem, not a threshold</p>
+<ul>
+<li><strong>Interaction-behavior specs</strong> (sort/filter/validation semantics) —</li>
+</ul>
+<p>  guards + data shapes carry intent; full behavior contracts are a format   evolution</p>
+<ul>
+<li><strong><code>uxloom diff</code></strong> (human-reviewable design diffs for PRs) and a real</li>
+</ul>
+<p>  docs site — ecosystem maturity items</p>
+<ul>
+<li>~~Declaration-coverage blindness~~ — <strong>closed in v0.6.1</strong>: the report</li>
+</ul>
+<p>  now states how much of the design was actually checkable.</p>
+<h3>Lanes and ownership</h3>
+<ul>
+<li><strong>Lane MAIN</strong>: schema/types, config, baseline, reporters, loader</li>
+</ul>
+<p>  (includes+comments), critics options, CLI wiring, docs, integration.</p>
+<ul>
+<li><strong>Lane B (agent)</strong>: <code>preview.ts</code>, <code>preview-template.ts</code>, new</li>
+</ul>
+<p>  <code>preview-export.ts</code> — theming, comments UI/API, static export.</p>
+<ul>
+<li><strong>Lane C (agent)</strong>: new <code>audit-tier3.ts</code> (pure functions) + tests +</li>
+</ul>
+<p>  <code>skills/uxloom/references/audit.md</code> additions.</p>
+</section>
+<section id="rfc-0004">
+<h2>RFC 0004 — The frontier release (v0.7.0)</h2>
+<p><strong>Status:</strong> Shipping · Closes every deferred item from RFC 0003.</p>
+<h3>R8 — <code>uxloom diff</code>: human-reviewable design diffs  *(Lane D)*</h3>
+<p>Semantic diff of two project files (or <code>--git &lt;ref&gt;</code> vs working tree): journeys/screens/states added/removed, transition changes (incl. guards/ roles), contract deltas, token changes, exemption changes. Output: human, <code>--json</code>, <code>--markdown</code> (PR-comment ready). A thousand-line JSON diff becomes ten meaningful lines.</p>
+<h3>R9 — Native-platform audit  *(Lane E)*</h3>
+<p>Marker evidence in Swift/Kotlin/Dart/Java via language-agnostic comment markers (<code>// data-ux-screen: X</code>, <code>// data-ux-state: y</code>) and native idioms (<code>.accessibilityIdentifier("ux-state:x")</code>, <code>Modifier.testTag("ux-state:x")</code>). Audit scans native sources; marker-quality heuristics stay conservative on comment markers (no thin-check — comments can't prove emptiness; static- render check still applies). The web-only audit asterisk is gone.</p>
+<h3>R10 — Audit tier 4 (live DOM) + PNG export  *(Lane F, optional Playwright)*</h3>
+<ul>
+<li><code>uxloom audit --live &lt;baseUrl&gt;</code>: loads each screen's route</li>
+</ul>
+<p>  (<code>uxloom.map.json</code> gains optional <code>route</code>), verifies <code>data-ux-screen</code>   presence and that marked state elements exist in the real DOM   (default-visible states verified as rendered; others as present).   Verdict tier "dom-verified" with honest labeling.</p>
+<ul>
+<li><code>uxloom export --png &lt;dir&gt;</code>: renders every screen×state to PNG via the</li>
+</ul>
+<p>  standalone HTML. Both features degrade gracefully with an install hint   when Playwright is absent — the core stays zero-dependency.</p>
+<h3>R11 — Accessibility pack v1  *(Lane MAIN)*</h3>
+<p>Only honestly-checkable-at-design-time rules, no checkbox theater:</p>
+<ul>
+<li><code>unlabeled-interactive</code> (warning): interactive component with no label —</li>
+</ul>
+<p>  screen-reader users get nothing.</p>
+<ul>
+<li>Large-text contrast: <code>textRole: "large"</code> components check at 3:1</li>
+</ul>
+<p>  (completing WCAG 1.4.3 properly instead of over-flagging display text).</p>
+<ul>
+<li><code>motion-fallback</code> (warning): <code>motion: "decorative"</code> components must</li>
+</ul>
+<p>  honor prefers-reduced-motion; <code>"essential"</code> documents intent.</p>
+<h3>R12 — Interaction-behavior specs  *(Lane MAIN + G renders)*</h3>
+<p>Fields: <code>validation { required?, pattern?, message? }</code>. List/table blocks: <code>sort</code>, <code>filter</code> (column lists). Documented intent for codegen; rendered as chips in the preview.</p>
+<h3>R13 — Designer authoring: structured edit mode  *(Lane G)*</h3>
+<p>In the preview: edit tokens, edit block copy/labels inline, reorder/add/ remove blocks, all POSTed to the server which writes the project file — the same file agents edit, watched live. Authoring without a canvas: designers manipulate the same source of truth, in design terms.</p>
+<h3>R14 — Figma/Penpot bridge via SVG  *(Lane G)*</h3>
+<p><code>uxloom export --svg &lt;dir&gt;</code>: one SVG per screen×state, faithful to the wireframe/theme renderer. Figma and Penpot import SVG natively — the bridge that works today with zero API coupling.</p>
+<h3>R15 — Real docs site  *(Lane MAIN)*</h3>
+<p>uxloom.dev/docs: generated from the repo's own markdown (QUICKSTART, skill references, RFCs) by a zero-dep generator run in release-prep — docs can never drift from the shipped truth.</p>
+<h3>Still not engineerable</h3>
+<p>Ecosystem maturity (users, adoption, bus factor) — only distribution and time. Recorded, unbuildable.</p>
+</section>
+</main>
+</body>
+</html>

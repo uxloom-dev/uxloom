@@ -14,8 +14,12 @@ const green = (s: string) => c("32", s);
 const dim = (s: string) => c("2", s);
 const bold = (s: string) => c("1", s);
 
-/** `uxloom audit [file] [--json|--sarif|--github] [--update-baseline]` */
-export function runAuditCli(fileArg?: string, flags: string[] = []): never {
+/** `uxloom audit [file] [--live <url>] [--json|--sarif|--github] [--update-baseline]` */
+export async function runAuditCli(
+  fileArg?: string,
+  flags: string[] = [],
+  liveUrl?: string,
+): Promise<never> {
   const projectPath = resolve(fileArg ?? process.env.UXLOOM_PROJECT ?? "uxloom.project.json");
   const format = parseFormatFlag(flags);
 
@@ -29,6 +33,13 @@ export function runAuditCli(fileArg?: string, flags: string[] = []): never {
   }
   const map = loadMap(resolve(ws.dir, "uxloom.map.json"));
   const result = runAudit(ws.project, ws.dir, map);
+
+  // Tier 4 (optional): verify markers in the real rendered DOM.
+  let live: import("./live-audit.js").LiveAuditResult | undefined;
+  if (liveUrl) {
+    const { runLiveAudit } = await import("./live-audit.js");
+    live = await runLiveAudit(ws.project, ws.dir, map as never, liveUrl);
+  }
 
   if (flags.includes("--update-baseline")) {
     ws.baseline.audit = result.findings.map(fingerprint);
@@ -52,14 +63,12 @@ export function runAuditCli(fileArg?: string, flags: string[] = []): never {
       screen: f.screen,
       state: f.state,
     }));
-    console.log(render(
-      {
-        tool: "uxloom", command: "audit", version: VERSION,
-        summary: { ...result.summary, unmappedScreens: result.summary.unmappedScreens.join(","), suppressed },
-        findings,
-      },
-      format,
-    ));
+    const envelope = {
+      tool: "uxloom" as const, command: "audit" as const, version: VERSION,
+      summary: { ...result.summary, unmappedScreens: result.summary.unmappedScreens.join(","), suppressed },
+      findings,
+    };
+    console.log(render(live ? ({ ...envelope, live } as never) : envelope, format));
     process.exit(errors > 0 ? 1 : 0);
   }
 
@@ -72,6 +81,11 @@ export function runAuditCli(fileArg?: string, flags: string[] = []): never {
     const loc = f.file ? dim(` (${f.file}${f.line ? `:${f.line}` : ""})`) : "";
     console.log(`  ${mark} ${bold(f.state ? `${f.screen ?? "?"}:${f.state}` : f.screen ?? "?")}  ${f.message}${loc}`);
     console.log(dim(`     fix → ${f.fix}`));
+  }
+  if (live) {
+    const { summarizeLiveAudit } = await import("./live-audit.js");
+    console.log(bold("\nlive DOM verification"));
+    for (const line of summarizeLiveAudit(live)) console.log(`  ${line}`);
   }
   const s = result.summary;
   if (suppressed > 0) console.log(dim(`\n${suppressed} finding(s) suppressed by baseline`));

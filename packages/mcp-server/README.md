@@ -29,8 +29,15 @@ npx uxloom check [file]   # design completeness; exit 1 on errors
 npx uxloom audit [file]   # implementation drift vs the contract; exit 1 on drift
 npx uxloom preview [file] # live mocks — themed by design tokens, every state,
                           # clickable journeys, reviewer comment mode
-npx uxloom export [file]  # one self-contained shareable HTML file [--out path]
+npx uxloom export [file]  # shareable HTML [--out] · --svg dir (Figma/Penpot)
+                          #   · --png dir (optional playwright)
+npx uxloom diff <a> <b>   # semantic design diff (also --git <ref>, --markdown)
 ```
+
+The audit reads native markers too — `// data-ux-state:` comments in any
+language, SwiftUI `accessibilityIdentifier("ux-state:…")`, Compose
+`testTag("ux-state:…")` — and `--live <url>` verifies markers in the real
+DOM when optional playwright is installed.
 
 `check`/`audit` flags: `--json`, `--sarif` (code scanning), `--github`
 (inline PR annotations), `--update-baseline` (freeze existing findings —

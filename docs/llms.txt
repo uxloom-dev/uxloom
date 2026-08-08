@@ -53,6 +53,24 @@ In `npx uxloom preview`, reviewers drop comments directly on screens;
 open comments surface in validation as reviewer-comment warnings, so
 designer feedback enters the same loop agents iterate on.
 
+## Design diffs, native audit, live verification (v0.7)
+
+`npx uxloom diff <old> <new>` (or `--git <ref>`) renders semantic design
+diffs — journeys/states/transitions/contract changes as sentences, with
+`--markdown` for PR comments. The audit reads native markers too: comment
+form `// data-ux-screen: X` / `// data-ux-state: y` works in Swift,
+Kotlin, Dart, and Java; SwiftUI `.accessibilityIdentifier("ux-state:y")`
+and Compose `testTag("ux-state:y")` are recognized natively. With optional
+playwright installed, `uxloom audit --live <url>` verifies markers in the
+real rendered DOM and `uxloom export --png <dir>` renders every
+screen×state to images; `uxloom export --svg <dir>` (zero-dep) produces
+SVGs that import directly into Figma or Penpot. The preview has a
+structured edit mode: designers reorder blocks, edit copy and tokens in
+the browser, writing to the same project file agents use. Accessibility
+pack: unlabeled interactive elements, large-text contrast (3:1), and
+decorative-motion fallbacks are checked; validation/sort/filter intent is
+part of the contract.
+
 ## Team-scale format features
 
 Design tokens (colors/radius/font) theme the preview. Transitions accept

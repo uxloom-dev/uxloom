@@ -8,7 +8,13 @@
  * changes to existing tiers or the reducer's contract.
  *
  * Tier 1 — registry: uxloom.map.json maps screen ids to path globs.
- * Tier 2 — markers: data-ux-screen / data-ux-state attributes in source.
+ * Tier 2 — markers, in three source forms (all equal-weight tier-2
+ *   evidence; Evidence.form records which one was found):
+ *   - attribute:  data-ux-screen="X" / data-ux-state="y"   (web)
+ *   - comment:    "// data-ux-screen: X" or the single-line block-comment
+ *                 form (any language — Swift, Kotlin, Dart, Java, …)
+ *   - identifier: .accessibilityIdentifier("ux-state:y") (SwiftUI),
+ *                 testTag("ux-state:y") (Compose)
  *
  * Verdict policy (deterministic, honesty-first):
  *  - screen with no mapped/marked files            → error   screen-unmapped
@@ -22,6 +28,9 @@ import { join, relative, resolve } from "node:path";
 import type { Project, Screen } from "@uxloom/journeygraph";
 import { analyzeMarkerQuality } from "./audit-tier3.js";
 
+/** How a tier-2 marker was written in source. All forms carry equal weight. */
+export type MarkerForm = "attribute" | "comment" | "identifier";
+
 export interface Evidence {
   tier: 1 | 2;
   kind: "registry-map" | "marker-screen" | "marker-state";
@@ -29,6 +38,7 @@ export interface Evidence {
   state?: string;
   file: string;
   line?: number;
+  form?: MarkerForm; // set on marker evidence only
 }
 
 export interface StateVerdict {
@@ -65,7 +75,7 @@ export interface AuditResult {
   };
 }
 
-const SOURCE_EXT = /\.(tsx?|jsx?|mjs|cjs|vue|svelte|html|astro|mdx)$/;
+const SOURCE_EXT = /\.(tsx?|jsx?|mjs|cjs|vue|svelte|html|astro|mdx|swift|kts?|dart|java)$/;
 const IGNORE_DIRS = new Set(["node_modules", ".git", "dist", "build", ".next", "out", "coverage", ".turbo"]);
 const MAX_FILE_BYTES = 512 * 1024;
 
@@ -123,26 +133,40 @@ function tierRegistry(ctx: AuditContext): Evidence[] {
   return evidence;
 }
 
-/** Tier 2: data-ux-screen / data-ux-state markers in source files. */
+/**
+ * The three marker spellings, each with two capture groups:
+ * [1] "screen" | "state", [2] the id. One entry per MarkerForm.
+ */
+const MARKER_PATTERNS: ReadonlyArray<{ form: MarkerForm; regex: RegExp }> = [
+  { form: "attribute", regex: /data-ux-(screen|state)\s*=\s*[{"'\s]*["']([\w.\-]+)["']/g },
+  { form: "comment", regex: /(?:\/\/|\/\*)\s*data-ux-(screen|state)\s*:\s*([\w.\-]+)/g },
+  { form: "identifier", regex: /\b(?:accessibilityIdentifier|testTag)\s*\(\s*"ux-(screen|state):([\w.\-]+)"\s*\)/g },
+];
+
+/** Cheap pre-filter: does this text contain any marker spelling at all? */
+const MARKER_HINT = /data-ux-|ux-(?:screen|state):/;
+
+/** Tier 2: data-ux markers (attribute, comment, or native-identifier form). */
 function tierMarkers(ctx: AuditContext): Evidence[] {
   const evidence: Evidence[] = [];
   const screenIds = new Set(ctx.project.screens.map((s) => s.id));
-  const marker = /data-ux-(screen|state)\s*=\s*[{"'\s]*["']([\w.\-]+)["']/g;
 
   for (const file of ctx.files) {
     const text = read(ctx, file);
-    if (!text.includes("data-ux-")) continue;
+    if (!MARKER_HINT.test(text)) continue;
     // Track the screens this file declares, to scope its state markers.
     const fileScreens = new Set<string>();
-    const stateHits: Array<{ state: string; line: number }> = [];
+    const stateHits: Array<{ state: string; line: number; form: MarkerForm }> = [];
     for (const line of text.split("\n").entries()) {
       const [lineNo, content] = line;
-      for (const m of content.matchAll(marker)) {
-        if (m[1] === "screen" && screenIds.has(m[2])) {
-          fileScreens.add(m[2]);
-          evidence.push({ tier: 2, kind: "marker-screen", screen: m[2], file, line: lineNo + 1 });
-        } else if (m[1] === "state") {
-          stateHits.push({ state: m[2], line: lineNo + 1 });
+      for (const { form, regex } of MARKER_PATTERNS) {
+        for (const m of content.matchAll(regex)) {
+          if (m[1] === "screen" && screenIds.has(m[2])) {
+            fileScreens.add(m[2]);
+            evidence.push({ tier: 2, kind: "marker-screen", screen: m[2], file, line: lineNo + 1, form });
+          } else if (m[1] === "state") {
+            stateHits.push({ state: m[2], line: lineNo + 1, form });
+          }
         }
       }
     }
@@ -155,7 +179,15 @@ function tierMarkers(ctx: AuditContext): Evidence[] {
           .map((s) => s.id);
     for (const owner of owners) {
       for (const hit of stateHits) {
-        evidence.push({ tier: 2, kind: "marker-state", screen: owner, state: hit.state, file, line: hit.line });
+        evidence.push({
+          tier: 2,
+          kind: "marker-state",
+          screen: owner,
+          state: hit.state,
+          file,
+          line: hit.line,
+          form: hit.form,
+        });
       }
     }
   }
@@ -192,7 +224,7 @@ export function runAudit(
   // Tier 2.5 — marker-quality heuristics (anti-washing): challenge
   // suspicious markers; never grant or upgrade a verdict.
   const markerFiles = ctx.files
-    .filter((f) => read(ctx, f).includes("data-ux-"))
+    .filter((f) => MARKER_HINT.test(read(ctx, f)))
     .map((f) => ({ path: f, text: read(ctx, f) }));
   findings.push(...analyzeMarkerQuality(markerFiles));
 

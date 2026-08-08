@@ -113,6 +113,7 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
   .srcchip { display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
              font-size: 10px; color: var(--mock-muted, var(--dim)); border: 1px solid var(--blockline);
              border-radius: 4px; padding: 0 5px; margin-top: 5px; align-self: flex-start; }
+  .srcchip + .srcchip { margin-left: 4px; }
   .kids { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 
   /* state treatments */
@@ -174,6 +175,42 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
   .cform .acts { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
   .cform .acts button { font-size: 12px; border: 1px solid var(--line); border-radius: 6px; padding: 2px 10px; }
   .cform .acts .save { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* edit mode */
+  .ewrap { position: relative; }
+  .etools { display: none; position: absolute; top: -12px; right: 8px; gap: 2px; z-index: 4;
+            background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 1px 3px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+  .ewrap:hover > .etools, .ewrap:focus-within > .etools { display: flex; }
+  .etools button { font-size: 12px; line-height: 1.4; padding: 1px 6px; border-radius: 4px; }
+  .etools button:hover, .etools button:focus-visible { background: #eef0ee; }
+  .eedit input { width: 100%; font: inherit; font-size: 13px; padding: 4px 6px; margin-top: 4px;
+                 border: 1px solid var(--accent); border-radius: 6px; }
+  .tokpanel { width: 196px; flex-shrink: 0; background: var(--panel); border: 1px solid var(--line);
+              border-radius: 10px; padding: 10px 12px; margin-right: 18px; font-size: 12px;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+              color: var(--ink); }
+  .tokpanel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim);
+                 margin-bottom: 6px; }
+  .tokpanel label { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+                    margin: 6px 0; }
+  .tokpanel input[type=color] { width: 44px; height: 24px; padding: 0; border: 1px solid var(--line);
+                                border-radius: 4px; background: none; cursor: pointer; }
+  .tokpanel input[type=number], .tokpanel input[type=text] { width: 96px; font: inherit; font-size: 12px;
+                                padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; }
+  .addblock { border: 1.5px dashed var(--blockline); border-radius: 8px; padding: 8px; width: 100%;
+              text-align: center; color: var(--dim); font-size: 12.5px; }
+  .addblock:hover, .addblock:focus-visible { border-color: var(--accent); color: var(--accent); }
+  .palette { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .palette button { border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; font-size: 12px;
+                    background: #fff; }
+  .palette button:hover, .palette button:focus-visible { border-color: var(--accent); color: var(--accent); }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); z-index: 20;
+           display: flex; gap: 10px; align-items: center; background: var(--err); color: #fff;
+           border-radius: 8px; padding: 8px 14px; font-size: 13px; max-width: 70vw;
+           box-shadow: 0 6px 20px rgba(0,0,0,.3); }
+  .toast button { color: #fff; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -190,6 +227,8 @@ var STATIC_INFO = null;
 /*__UXLOOM_STATIC__*/
 var data = null, comments = [], sel = { screen: null, state: "default" }, viewport = "desktop";
 var commentMode = false;
+/* assigned by the edit-mode section below; stripped from static exports */
+var EDIT = null;
 
 function h(tag, cls, text) {
   var el = document.createElement(tag);
@@ -243,18 +282,54 @@ function autoBlocks(screen) {
   var hasList = false;
   (screen.components || []).forEach(function (c) {
     var s = (c.semantic || "").toLowerCase();
-    if (s.indexOf("button") === 0) blocks.push({ type: "button", label: c.label && c.label.en || c.semantic });
+    /* carry interaction intent (R12) through so derived blocks chip it */
+    function derived(type, label) {
+      return { type: type, label: label, validation: c.validation, motion: c.motion };
+    }
+    if (s.indexOf("button") === 0) blocks.push(derived("button", c.label && c.label.en || c.semantic));
     else if (s.indexOf("input") === 0 || s.indexOf("field") === 0)
-      blocks.push({ type: "field", label: c.label && c.label.en || c.semantic });
-    else if (s.indexOf("list") === 0 || s.indexOf("table") === 0) { blocks.push({ type: "list", label: c.semantic }); hasList = true; }
-    else if (s.indexOf("nav") === 0) blocks.splice(1, 0, { type: "nav", label: c.semantic });
-    else blocks.push({ type: "card", label: c.semantic });
+      blocks.push(derived("field", c.label && c.label.en || c.semantic));
+    else if (s.indexOf("list") === 0 || s.indexOf("table") === 0) { blocks.push(derived("list", c.semantic)); hasList = true; }
+    else if (s.indexOf("nav") === 0) blocks.splice(1, 0, derived("nav", c.semantic));
+    else blocks.push(derived("card", c.semantic));
   });
   if (!hasList) blocks.push({ type: "list", label: "Content", count: 3 });
   return blocks;
 }
 
-function renderBlock(b) {
+/* -------- R12 chips: validation / sort / filter / motion intent ------ */
+function metaChip(text, title) {
+  var s = h("span", "srcchip", text);
+  if (title) s.title = title;
+  return s;
+}
+/* validation/motion live on components; blocks derived by autoBlocks carry
+   them directly, explicit field/button blocks match a component by label */
+function blockMeta(b, screen) {
+  var v = b.validation, m = b.motion;
+  if ((b.type === "field" || b.type === "button") && screen && screen.components && (!v || !m)) {
+    var match = screen.components.find(function (c) {
+      return b.label && ((c.label && c.label.en === b.label) || c.semantic === b.label);
+    });
+    if (match) { if (!v) v = match.validation; if (!m) m = match.motion; }
+  }
+  return { validation: v, motion: m };
+}
+function appendMetaChips(el, b, screen) {
+  var meta = blockMeta(b, screen);
+  if (meta.validation) {
+    if (meta.validation.required) el.appendChild(metaChip("required", meta.validation.message));
+    if (meta.validation.pattern)
+      el.appendChild(metaChip("pattern: " + meta.validation.pattern, meta.validation.message));
+  }
+  if (b.type === "table" || b.type === "list") {
+    if (b.sort && b.sort.length) el.appendChild(metaChip("sort: " + b.sort.join(", ")));
+    if (b.filter && b.filter.length) el.appendChild(metaChip("filter: " + b.filter.join(", ")));
+  }
+  if (meta.motion === "decorative") el.appendChild(metaChip("motion: decorative"));
+}
+
+function renderBlock(b, screen) {
   var el, i, j, n = b.count || 3;
   switch (b.type) {
     case "list":
@@ -296,16 +371,17 @@ function renderBlock(b) {
       el.appendChild(h("span", "pill")); el.appendChild(h("span", "pill")); break;
     case "form":
       el = h("div", "b"); el.appendChild(h("div", "lab", b.label || "Form"));
-      var kk = h("div", "kids"); (b.children || [{ type: "field" }, { type: "field" }, { type: "button", label: "Submit" }]).forEach(function (ch) { kk.appendChild(renderBlock(ch)); }); el.appendChild(kk); break;
+      var kk = h("div", "kids"); (b.children || [{ type: "field" }, { type: "field" }, { type: "button", label: "Submit" }]).forEach(function (ch) { kk.appendChild(renderBlock(ch, screen)); }); el.appendChild(kk); break;
     default:
       el = h("div", "b"); el.appendChild(h("div", "lab", b.label || b.type));
   }
   if (b.children && b.type !== "form") {
     var kids = h("div", "kids");
-    b.children.forEach(function (ch) { kids.appendChild(renderBlock(ch)); });
+    b.children.forEach(function (ch) { kids.appendChild(renderBlock(ch, screen)); });
     el.appendChild(kids);
   }
   if (b.source) el.appendChild(h("span", "srcchip", b.source));
+  appendMetaChips(el, b, screen);
   return el;
 }
 
@@ -316,18 +392,23 @@ function renderScreenBody(screen, stateId) {
   var blocks = (screen.layout && screen.layout.blocks) || autoBlocks(screen);
   var isError = stateId.indexOf("error") === 0;
   var baseline = stateId === "default" || stateId === "empty" || stateId === "loading";
+  /* editing needs an explicit layout: block indexes must map 1:1 to file */
+  var editing = EDIT && EDIT.on && !STATIC_INFO && screen.layout && screen.layout.blocks;
   var content = h("div", stateId === "loading" ? "skel" : "");
   content.style.display = "flex"; content.style.flexDirection = "column"; content.style.gap = "10px";
 
   if (stateId === "empty") {
     blocks.filter(function (b) { return ["header", "nav"].indexOf(b.type) >= 0; })
-      .forEach(function (b) { content.appendChild(renderBlock(b)); });
+      .forEach(function (b) { content.appendChild(renderBlock(b, screen)); });
     var eb = h("div", "emptybox");
     eb.appendChild(h("div", null, "Nothing here yet"));
     eb.appendChild(h("small", null, screen.intent || "Empty state — first-run guidance goes here"));
     content.appendChild(eb);
   } else {
-    blocks.forEach(function (b) { content.appendChild(renderBlock(b)); });
+    blocks.forEach(function (b, i) {
+      var el = renderBlock(b, screen);
+      content.appendChild(editing ? EDIT.wrap(el, b, i, screen) : el);
+    });
   }
 
   if (isError) {
@@ -335,6 +416,7 @@ function renderScreenBody(screen, stateId) {
     content.className += " dimmed";
   }
   body.appendChild(content);
+  if (editing && stateId !== "empty") body.appendChild(EDIT.addButton(screen));
 
   if (!baseline && !isError) { // custom states render as overlays over the default
     var ov = h("div", "overlay"), mo = h("div", "modal");
@@ -481,8 +563,13 @@ function render() {
     if (openCount) cb.appendChild(h("span", "cnt", String(openCount)));
     cb.setAttribute("aria-pressed", commentMode ? "true" : "false");
     cb.title = "Comment mode: click the mock to leave a pinned note";
-    cb.onclick = function () { commentMode = !commentMode; render(); };
+    cb.onclick = function () {
+      commentMode = !commentMode;
+      if (commentMode && EDIT) EDIT.on = false; /* modes are exclusive */
+      render();
+    };
     bar.appendChild(cb);
+    if (EDIT) bar.appendChild(EDIT.toggleButton());
   }
   if (STATIC_INFO) bar.appendChild(h("span", "chip", "static export \\u00b7 " + STATIC_INFO.generated));
   else bar.appendChild(h("span", "chip live", "\\u25cf live"));
@@ -502,6 +589,7 @@ function render() {
   stage.className = "stage" + (commentMode && !STATIC_INFO ? " commenting" : "");
   if (!screen) { stage.appendChild(h("div", "err-load", "No screens in the project yet — ask your agent to design some.")); }
   else {
+    if (EDIT && EDIT.on && !STATIC_INFO) stage.appendChild(EDIT.tokenPanel());
     var frame = h("div", "frame " + viewport);
     frame.appendChild(chromeFor(viewport));
     var body = renderScreenBody(screen, sel.state);
@@ -575,6 +663,194 @@ function load() {
     document.getElementById("stage").appendChild(h("div", "err-load", "Cannot load project: " + e.message));
   });
 }
+/*__UXLOOM_EDIT__*/
+/* ------------- structured edit mode (live preview only) ------------- */
+EDIT = (function () {
+  var api = { on: false };
+  var BLOCK_TYPES = ["header", "nav", "hero", "text", "list", "card", "form",
+                     "field", "button", "image", "table", "footer", "custom"];
+
+  function toast(msg) {
+    var old = document.querySelector(".toast");
+    if (old) old.remove();
+    var t = h("div", "toast");
+    t.setAttribute("role", "alert");
+    t.appendChild(h("span", null, msg));
+    var x = h("button", null, "\\u2715");
+    x.setAttribute("aria-label", "Dismiss");
+    x.onclick = function () { t.remove(); };
+    t.appendChild(x);
+    document.body.appendChild(t);
+  }
+
+  /* POST an op; the file write wakes the SSE watcher, which re-renders
+     every viewer — success needs no local handling at all */
+  function postEdit(payload) {
+    fetch("/edit", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+      });
+    }).catch(function (e) { toast(e.message); });
+  }
+
+  api.toggleButton = function () {
+    var b = h("button", "cbtn" + (api.on ? " on" : ""), "\\u270e edit");
+    b.setAttribute("aria-pressed", api.on ? "true" : "false");
+    b.title = "Edit mode: tokens, copy, and blocks \\u2014 writes the project file";
+    b.onclick = function () {
+      api.on = !api.on;
+      if (api.on) commentMode = false; /* modes are exclusive */
+      render();
+    };
+    return b;
+  };
+
+  /* 3-digit hex → 6-digit (color inputs only accept #rrggbb) */
+  function hex6(v, fallback) {
+    if (typeof v !== "string") return fallback;
+    var m = v.match(/^#([0-9a-fA-F]{3})$/);
+    if (m) return "#" + m[1].charAt(0) + m[1].charAt(0) + m[1].charAt(1) + m[1].charAt(1) +
+                 m[1].charAt(2) + m[1].charAt(2);
+    return /^#[0-9a-fA-F]{6}$/.test(v) ? v : fallback;
+  }
+
+  api.tokenPanel = function () {
+    var p = h("div", "tokpanel");
+    p.appendChild(h("h3", null, "Design tokens"));
+    var t = (data && data.tokens) || {}, c = t.colors || {};
+    [["accent", "#2f6b52"], ["bg", "#ffffff"], ["surface", "#ffffff"],
+     ["text", "#2a2e2a"], ["muted", "#6b706b"]].forEach(function (def) {
+      var name = def[0];
+      var lab = h("label");
+      lab.appendChild(h("span", null, name));
+      var inp = h("input");
+      inp.setAttribute("type", "color");
+      inp.value = hex6(c[name], def[1]);
+      inp.setAttribute("aria-label", "Token color " + name);
+      inp.onchange = function () {
+        postEdit({ op: "set-token", path: "colors." + name, value: inp.value });
+      };
+      lab.appendChild(inp);
+      p.appendChild(lab);
+    });
+    var rl = h("label");
+    rl.appendChild(h("span", null, "radius"));
+    var ri = h("input");
+    ri.setAttribute("type", "number");
+    ri.setAttribute("min", "0"); ri.setAttribute("max", "32"); ri.setAttribute("step", "1");
+    ri.value = typeof t.radius === "number" ? String(t.radius) : "8";
+    ri.setAttribute("aria-label", "Token radius in px");
+    ri.onchange = function () {
+      var n = Number(ri.value);
+      if (isFinite(n)) postEdit({ op: "set-token", path: "radius", value: n });
+    };
+    rl.appendChild(ri); p.appendChild(rl);
+    var fl = h("label");
+    fl.appendChild(h("span", null, "font"));
+    var fi = h("input");
+    fi.setAttribute("type", "text");
+    fi.value = t.font || "";
+    fi.setAttribute("placeholder", "Inter, sans-serif");
+    fi.setAttribute("aria-label", "Token font stack");
+    fi.onchange = function () {
+      if (fi.value.trim()) postEdit({ op: "set-token", path: "font", value: fi.value.trim() });
+    };
+    fl.appendChild(fi); p.appendChild(fl);
+    return p;
+  };
+
+  function toolButton(txt, label, fn) {
+    var x = h("button", null, txt);
+    x.setAttribute("aria-label", label);
+    x.title = label;
+    x.onclick = function (e) { e.stopPropagation(); fn(); };
+    return x;
+  }
+
+  function inlineEdit(w, b, i, screen) {
+    var old = w.querySelector(".eedit");
+    if (old) { old.remove(); return; }
+    var isCopy = b.type === "text" || b.type === "hero";
+    var box = h("div", "eedit");
+    var inp = h("input");
+    inp.setAttribute("type", "text");
+    inp.value = isCopy ? (b.copy || "") : (b.label || "");
+    inp.setAttribute("aria-label", (isCopy ? "Copy" : "Label") + " for " + b.type + " block " + (i + 1) +
+      " \\u2014 Enter saves, Escape cancels");
+    inp.onkeydown = function (ev) {
+      if (ev.key === "Enter") {
+        if (isCopy) postEdit({ op: "set-copy", screen: screen.id, blockIndex: i, copy: inp.value });
+        else postEdit({ op: "set-label", screen: screen.id, blockIndex: i, label: inp.value });
+        box.remove();
+      }
+      if (ev.key === "Escape") box.remove();
+    };
+    box.appendChild(inp);
+    w.appendChild(box);
+    inp.focus();
+    inp.select();
+  }
+
+  /* hover/focus toolbar on each top-level block of an explicit layout */
+  api.wrap = function (el, b, i, screen) {
+    var total = screen.layout.blocks.length;
+    var w = h("div", "ewrap");
+    w.appendChild(el);
+    var tools = h("div", "etools");
+    if (i > 0) tools.appendChild(toolButton("\\u2191", "Move " + b.type + " block up", function () {
+      postEdit({ op: "move-block", screen: screen.id, from: i, to: i - 1 });
+    }));
+    if (i < total - 1) tools.appendChild(toolButton("\\u2193", "Move " + b.type + " block down", function () {
+      postEdit({ op: "move-block", screen: screen.id, from: i, to: i + 1 });
+    }));
+    if (["text", "hero", "button", "field"].indexOf(b.type) >= 0) {
+      var what = b.type === "text" || b.type === "hero" ? "copy" : "label";
+      tools.appendChild(toolButton("\\u270e", "Edit " + b.type + " " + what, function () {
+        inlineEdit(w, b, i, screen);
+      }));
+    }
+    tools.appendChild(toolButton("\\u2715", "Remove " + b.type + " block", function () {
+      if (window.confirm("Remove this " + b.type + " block?"))
+        postEdit({ op: "remove-block", screen: screen.id, blockIndex: i });
+    }));
+    w.appendChild(tools);
+    return w;
+  };
+
+  api.addButton = function (screen) {
+    var wrap = h("div");
+    var pal = null;
+    var btn = h("button", "addblock", "+ add block");
+    btn.setAttribute("aria-expanded", "false");
+    btn.onclick = function () {
+      if (pal) { pal.remove(); pal = null; btn.setAttribute("aria-expanded", "false"); return; }
+      pal = h("div", "palette");
+      pal.setAttribute("role", "menu");
+      BLOCK_TYPES.forEach(function (t) {
+        var tb = h("button", null, t);
+        tb.setAttribute("role", "menuitem");
+        tb.onclick = function () {
+          postEdit({ op: "add-block", screen: screen.id, index: screen.layout.blocks.length, block: { type: t } });
+          pal.remove(); pal = null;
+          btn.setAttribute("aria-expanded", "false");
+        };
+        pal.appendChild(tb);
+      });
+      wrap.appendChild(pal);
+      btn.setAttribute("aria-expanded", "true");
+      pal.firstChild.focus();
+    };
+    wrap.appendChild(btn);
+    return wrap;
+  };
+
+  return api;
+})();
+/*__UXLOOM_EDIT_END__*/
 /*__UXLOOM_LIVE__*/
 new EventSource("/events").onmessage = function () { load(); };
 /*__UXLOOM_LIVE_END__*/
@@ -586,11 +862,23 @@ load();
 const STATIC_MARKER = "/*__UXLOOM_STATIC__*/";
 const LIVE_START = "/*__UXLOOM_LIVE__*/";
 const LIVE_END = "/*__UXLOOM_LIVE_END__*/";
+const EDIT_START = "/*__UXLOOM_EDIT__*/";
+const EDIT_END = "/*__UXLOOM_EDIT_END__*/";
+
+function stripSection(html: string, startMarker: string, endMarker: string): string {
+  const start = html.indexOf(startMarker);
+  const end = html.indexOf(endMarker);
+  return start >= 0 && end > start
+    ? html.slice(0, start) + html.slice(end + endMarker.length)
+    : html;
+}
 
 /**
  * Turn the live template into one self-contained HTML file: project data
  * embedded in place of fetch("/project"), SSE removed (the bar shows
- * "static export · <date>" instead of "live"), comment mode hidden.
+ * "static export · <date>" instead of "live"), comment mode hidden, and
+ * the structured edit mode stripped entirely (EDIT stays null, so no edit
+ * UI ever renders and no /edit calls exist in the export).
  */
 export function renderStandalone(projectJson: string): string {
   // Re-serialize so the embedded payload is exactly one JSON expression,
@@ -600,10 +888,7 @@ export function renderStandalone(projectJson: string): string {
   const bootstrap =
     "STATIC_INFO = { generated: " + JSON.stringify(generated) + ", data: " + embedded + " };";
   let html = PREVIEW_TEMPLATE.replace(STATIC_MARKER, bootstrap);
-  const start = html.indexOf(LIVE_START);
-  const end = html.indexOf(LIVE_END);
-  if (start >= 0 && end > start) {
-    html = html.slice(0, start) + html.slice(end + LIVE_END.length);
-  }
+  html = stripSection(html, EDIT_START, EDIT_END);
+  html = stripSection(html, LIVE_START, LIVE_END);
   return html;
 }

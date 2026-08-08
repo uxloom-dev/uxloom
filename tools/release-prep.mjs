@@ -36,10 +36,12 @@ edit("server.json", (t) => t.replace(/"version": "[^"]+"/g, `"version": "${versi
 const [major, minor] = version.split(".");
 edit("docs/index.html", (t) => t.replace(/>v\d+\.\d+</, `>v${major}.${minor}<`));
 
-// 4. Full verification: build, tests, surface consistency, benchmark gate.
+// 4. Regenerate the docs site from the shipped sources (cannot drift).
+// 5. Full verification: build, tests, surface consistency, benchmark gate.
 const run = (cmd, cwd = root) => execSync(cmd, { cwd, stdio: "inherit" });
 run("npm install --no-audit --no-fund"); // refresh workspace links after bump
 run("npx tsc --build");
+run("node tools/build-docs.mjs");
 run("npx vitest run");
 run("node tools/consistency-check.mjs");
 run("node src/run.mjs", join(root, "packages/bench"));

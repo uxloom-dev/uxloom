@@ -70,6 +70,12 @@ export interface ScreenComponent {
   minTargetPx?: number;
   /** True when the component is tappable/clickable. */
   interactive?: boolean;
+  /** Text size class: "large" (≥18pt/14pt-bold) checks contrast at 3:1. */
+  textRole?: "normal" | "large";
+  /** Motion intent: decorative motion must honor prefers-reduced-motion. */
+  motion?: "none" | "decorative" | "essential";
+  /** Field validation intent — documented for codegen, rendered as chips. */
+  validation?: { required?: boolean; pattern?: string; message?: string };
 }
 
 export type PlatformId = "web" | "mweb" | "ios" | "android";
@@ -98,6 +104,10 @@ export interface Block {
   copy?: string;
   /** Named data binding this block renders. */
   source?: string;
+  /** Sortable columns/keys (list & table blocks) — interaction intent. */
+  sort?: string[];
+  /** Filterable columns/keys (list & table blocks) — interaction intent. */
+  filter?: string[];
   children?: Block[];
 }
 

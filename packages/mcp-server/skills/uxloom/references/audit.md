@@ -3,6 +3,7 @@
 ## Contents
 - What the audit proves
 - The marker convention (how to make code self-auditing)
+- Native platforms (Swift / Kotlin / Dart / Java)
 - The registry (uxloom.map.json)
 - Verdicts and finding codes
 - Marker quality (anti-washing)
@@ -34,6 +35,66 @@ renders — any framework, zero runtime cost:
   the file without needing a registry entry.
 - `data-ux-state="<state>"` on the element that renders each contracted
   state, exactly matching the contract's state ids.
+
+## Native platforms (Swift / Kotlin / Dart / Java)
+
+The audit scans `.swift`, `.kt`, `.kts`, `.dart`, and `.java` sources too.
+Since native UI has no HTML attributes, three marker forms are recognized —
+all equal-weight tier-2 evidence, same verdicts, same file:line:
+
+**1. Attribute form** (web, shown above): `data-ux-screen="X"` /
+`data-ux-state="y"`.
+
+**2. Native identifiers** — piggyback on the accessibility/test hooks you
+should be setting anyway:
+
+SwiftUI:
+
+```swift
+VStack {
+  Text("Inbox").accessibilityIdentifier("ux-screen:Inbox")
+  if isLoading {
+    ProgressView().accessibilityIdentifier("ux-state:loading")
+  }
+  List(rows) { RowView($0) }.accessibilityIdentifier("ux-state:default")
+}
+```
+
+Jetpack Compose:
+
+```kotlin
+// data-ux-screen: Inbox
+@Composable
+fun InboxScreen(state: UiState) {
+  when (state) {
+    UiState.Loading -> Spinner(Modifier.testTag("ux-state:loading"))
+    UiState.Empty -> EmptyCard(Modifier.testTag("ux-state:empty"))
+    else -> MessageList(Modifier.testTag("ux-state:default"))
+  }
+}
+```
+
+**3. Comment form** — works in any language (Dart, Java, or anywhere an
+identifier can't be attached). `//` and single-line `/* ... */` are both
+recognized; whitespace around the `:` is tolerated:
+
+```dart
+// data-ux-screen: Profile
+Widget build(BuildContext context) {
+  if (loading) {
+    return Spinner(); // data-ux-state: loading
+  }
+  return ProfileBody(); // data-ux-state: default
+}
+```
+
+Comment markers are **declaration-grade evidence**: they assert where a
+state renders but, unlike an attribute on an element, they cannot prove
+anything about the element itself — so the thin-marker check does not
+apply to them (nor to identifier markers). Live verification (the DOM
+tier) is the stronger tier when you need proof beyond declaration. The
+static-render check still applies to all forms: an unconditional
+`loading`/`empty`/`error*` marker is challenged whatever its spelling.
 
 ## The registry (uxloom.map.json)
 
@@ -69,9 +130,9 @@ silent.
 
 | Code | Severity | Triggered when |
 |---|---|---|
-| `state-marker-thin` | warning | the marker sits on a bare element that renders nothing: self-closing (`<div data-ux-state="empty" />`) or closing immediately with only whitespace inside, with no other props (no className, no children, no bindings) |
-| `state-marker-duplicate` | warning | one element carries several `data-ux-state` attributes, or two different states are marked on textually identical bare elements in the same file — one element cannot render two distinct states distinctly; each state is flagged once |
-| `state-marker-static` | warning | a conditional-by-nature state (`loading`, `empty`, or any `error*`) has no conditional-rendering signal (`&&`, ternary, `if`, `switch`, `v-if`, `*ngIf`, `{#if`, `.map(`, optional chaining) on its line or the 3 lines above — the state is likely always- or never-rendered. Not applied to `default` or custom states, and suppressed inside components named after the state (e.g. `function LoadingSkeleton`), where the conditional lives at the call site |
+| `state-marker-thin` | warning | the marker sits on a bare element that renders nothing: self-closing (`<div data-ux-state="empty" />`) or closing immediately with only whitespace inside, with no other props (no className, no children, no bindings). Attribute form only — comment and identifier markers cannot prove element emptiness, so they are never flagged thin |
+| `state-marker-duplicate` | warning | one element carries several `data-ux-state` attributes, or two different states are marked on textually identical bare elements in the same file — one element cannot render two distinct states distinctly; each state is flagged once. Attribute form only, for the same reason as thin |
+| `state-marker-static` | warning | a conditional-by-nature state (`loading`, `empty`, or any `error*`) has no conditional-rendering signal (`&&`, ternary/`?:`, `if`, `guard`, `switch`, `when`, `.let`, `v-if`, `*ngIf`, `{#if`, `.map(`, optional chaining) on its line or the 3 lines above — the state is likely always- or never-rendered. Applies to all three marker forms. Not applied to `default` or custom states, and suppressed inside components named after the state (e.g. `function LoadingSkeleton`, `struct LoadingView`, `fun EmptyState`, `class ErrorBanner`), where the conditional lives at the call site |
 
 Fixing the warnings is always the same move: render the real state UI
 inside (or as) the marked element, gated by the condition that actually

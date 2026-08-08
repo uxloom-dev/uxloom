@@ -29,22 +29,28 @@ export function contrastRatio(fg: string, bg: string): number {
  * Declared-color checking is deliberate: it runs before any rendering
  * exists, on the design data itself.
  */
+/** WCAG 2.2 AA large-text minimum (≥18pt or ≥14pt bold): 3:1. */
+const AA_LARGE = 3.0;
+
 export function wcagContrast(project: Project, minimumRatio = 4.5): Finding[] {
   const findings: Finding[] = [];
 
   for (const screen of project.screens) {
     for (const component of screen.components ?? []) {
       if (!component.fg || !component.bg) continue;
+      const required = component.textRole === "large"
+        ? Math.min(AA_LARGE, minimumRatio)
+        : minimumRatio;
       const ratio = contrastRatio(component.fg, component.bg);
-      if (ratio < minimumRatio) {
+      if (ratio < required) {
         findings.push({
           critic: CRITIC,
           code: "contrast-below-aa",
           severity: "error",
           screen: screen.id,
           component: component.id ?? component.semantic,
-          message: `"${component.semantic}" on screen "${screen.id}" has contrast ${ratio.toFixed(2)}:1 (${component.fg} on ${component.bg}) — below the ${minimumRatio}:1 minimum for normal text.`,
-          fix: `Darken/lighten one side until the ratio reaches ${minimumRatio}:1.`,
+          message: `"${component.semantic}" on screen "${screen.id}" has contrast ${ratio.toFixed(2)}:1 (${component.fg} on ${component.bg}) — below the ${required}:1 minimum for ${component.textRole === "large" ? "large" : "normal"} text.`,
+          fix: `Darken/lighten one side until the ratio reaches ${required}:1.`,
         });
       }
     }

@@ -369,7 +369,8 @@
       UXLoom
     </a>
     <nav class="nav-links" aria-label="Primary">
-      <span class="pill">v0.6</span>
+      <span class="pill">v0.7</span>
+      <a href="/docs.html">Docs</a>
       <a href="https://github.com/uxloom-dev/uxloom">GitHub</a>
       <a href="https://www.npmjs.com/package/uxloom">npm</a>
     </nav>
@@ -690,9 +691,11 @@
         <li>
           <strong>Gate it forever</strong> — <code>npx uxloom check</code>
           (design completeness) and <code>npx uxloom audit</code>
-          (implementation drift) exit 1 on failure, with
+          (implementation drift — web and native via Swift/Kotlin/Dart
+          markers, with live DOM verification) exit 1 on failure, with
           <code>--json</code>/<code>--sarif</code>/<code>--github</code>
           outputs for CI and a baseline mode for adopting on existing apps.
+          Review design changes in PRs with <code>npx uxloom diff</code>.
         </li>
       </ol>
       <img class="start-gif" src="preview-demo.gif" width="1456" height="825"

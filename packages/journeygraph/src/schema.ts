@@ -23,6 +23,16 @@ export const ScreenComponentSchema = z.object({
   bg: z.string().regex(hexColor, "bg must be a hex color like #FFFFFF").optional(),
   minTargetPx: z.number().positive().optional(),
   interactive: z.boolean().optional(),
+  /** Text size class: "large" (≥18pt/14pt-bold) checks contrast at 3:1. */
+  textRole: z.enum(["normal", "large"]).optional(),
+  /** Motion intent: decorative motion must honor prefers-reduced-motion. */
+  motion: z.enum(["none", "decorative", "essential"]).optional(),
+  /** Field validation intent — documented for codegen, rendered as chips. */
+  validation: z.object({
+    required: z.boolean().optional(),
+    pattern: z.string().min(1).optional(),
+    message: z.string().min(1).optional(),
+  }).strict().optional(),
 }).strict();
 
 export const PlatformIdSchema = z.enum(["web", "mweb", "ios", "android"]);
@@ -48,6 +58,10 @@ const BlockBase = z.object({
   copy: z.string().optional(),
   /** Named data binding this block renders (documents intent for codegen). */
   source: z.string().optional(),
+  /** Sortable columns/keys (list & table blocks) — interaction intent. */
+  sort: z.array(z.string().min(1)).optional(),
+  /** Filterable columns/keys (list & table blocks) — interaction intent. */
+  filter: z.array(z.string().min(1)).optional(),
 });
 export const BlockSchema = BlockBase.extend({
   children: z.array(BlockBase.strict()).optional(),

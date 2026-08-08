@@ -14,9 +14,16 @@
  *  - state-marker-static     conditional-natured state (loading/empty/
  *                            error*) with no conditional-rendering signal
  *
+ * Marker forms (RFC 0004, R9): attribute markers get all three checks.
+ * Comment and identifier markers (native platforms) get ONLY the static
+ * check — a comment or an accessibility identifier cannot prove that an
+ * element is empty or bare, so thin/duplicate would be guesses, and
+ * guesses are exactly what this module refuses to make.
+ *
  * Integration into runAudit happens in audit.ts; this module exports pure
  * functions over `{ path, text }` inputs and touches no filesystem.
  */
+import type { MarkerForm } from "./audit.js";
 
 export interface MarkerQualityFinding {
   code: "state-marker-thin" | "state-marker-duplicate" | "state-marker-static";
@@ -31,11 +38,20 @@ export interface MarkerQualityFinding {
 
 const STATE_ATTR = /data-ux-state\s*=\s*[{"'\s]*["']([\w.\-]+)["']/g;
 const SCREEN_ATTR = /data-ux-screen\s*=\s*[{"'\s]*["']([\w.\-]+)["']/g;
+const STATE_COMMENT = /(?:\/\/|\/\*)\s*data-ux-state\s*:\s*([\w.\-]+)/g;
+const SCREEN_COMMENT = /(?:\/\/|\/\*)\s*data-ux-screen\s*:\s*([\w.\-]+)/g;
+const STATE_IDENTIFIER = /\b(?:accessibilityIdentifier|testTag)\s*\(\s*"ux-state:([\w.\-]+)"\s*\)/g;
+const SCREEN_IDENTIFIER = /\b(?:accessibilityIdentifier|testTag)\s*\(\s*"ux-screen:([\w.\-]+)"\s*\)/g;
 /** Any data-ux-* attribute with a quoted or braced value — for stripping. */
 const UX_ATTRS = /data-ux-[\w-]+\s*=\s*(?:"[^"]*"|'[^']*'|\{[^}]*\})/g;
 
-/** Signals that the surrounding code renders conditionally. */
-const CONDITIONAL_SIGNAL = /&&|\?|if\s*\(|switch|v-if|\*ngIf|\{#if|\.map\(|\)\s*:\s*\(|:\s*</;
+/**
+ * Signals that the surrounding code renders conditionally. Covers JSX,
+ * template dialects, and Swift/Kotlin/Dart control flow (`if `, `guard `,
+ * `when(`/`when `, `?:` and optional chaining via `?`, `.let`, `switch`).
+ */
+const CONDITIONAL_SIGNAL =
+  /&&|\?|if\s*\(|\bif\s|\bguard\s|switch|\bwhen\s*\(|\bwhen\s|\.let\b|v-if|\*ngIf|\{#if|\.map\(|\)\s*:\s*\(|:\s*</;
 
 const STATIC_WINDOW_LINES = 3; // lines before the marker scanned for signals
 const NAME_WINDOW_LINES = 10; // lines scanned for an enclosing state-named component
@@ -150,7 +166,8 @@ interface Marker {
   state: string;
   index: number;
   line: number; // 1-based
-  tag: Tag | null;
+  form: MarkerForm;
+  tag: Tag | null; // resolved for attribute markers only
 }
 
 function lineOffsets(text: string): number[] {
@@ -172,14 +189,15 @@ function lineAt(starts: number[], index: number): number {
 
 /**
  * True when the marker sits inside a component whose name spells out the
- * state (function LoadingSkeleton, const EmptyState = …) — the conditional
- * then lives at the call site, so the marker is not "static".
+ * state (function LoadingSkeleton, const EmptyState = …, struct LoadingView,
+ * fun EmptyState, class ErrorBanner) — the conditional then lives at the
+ * call site, so the marker is not "static".
  */
 function insideStateNamedComponent(lines: string[], markerLine: number, state: string): boolean {
   const words = state.toLowerCase().match(/[a-z]+/g);
   if (!words || words.length === 0) return false;
   const window = lines.slice(Math.max(0, markerLine - 1 - NAME_WINDOW_LINES), markerLine).join("\n");
-  for (const decl of window.matchAll(/(?:function|const)\s+([A-Za-z_$][\w$]*)/g)) {
+  for (const decl of window.matchAll(/(?:function|const|struct|fun|class)\s+([A-Za-z_$][\w$]*)/g)) {
     const name = decl[1].toLowerCase();
     if (words.every((w) => name.includes(w))) return true;
   }
@@ -190,7 +208,9 @@ function analyzeFile(path: string, text: string): MarkerQualityFinding[] {
   const lines = text.split("\n");
   const starts = lineOffsets(text);
 
-  const screenIds = new Set([...text.matchAll(SCREEN_ATTR)].map((m) => m[1]));
+  const screenIds = new Set(
+    [SCREEN_ATTR, SCREEN_COMMENT, SCREEN_IDENTIFIER].flatMap((re) => [...text.matchAll(re)].map((m) => m[1])),
+  );
   const screen = screenIds.size === 1 ? [...screenIds][0] : undefined;
 
   const tags = new Map<number, Tag>(); // keyed by tag start — shared across markers
@@ -202,9 +222,21 @@ function analyzeFile(path: string, text: string): MarkerQualityFinding[] {
       state: m[1],
       index: m.index,
       line: lineAt(starts, m.index),
+      form: "attribute",
       tag: parsed ? tags.get(parsed.start)! : null,
     });
   }
+  // Comment / identifier markers: no element to resolve, so tag stays null
+  // and only the static check may apply to them.
+  for (const [regex, form] of [
+    [STATE_COMMENT, "comment"],
+    [STATE_IDENTIFIER, "identifier"],
+  ] as const) {
+    for (const m of text.matchAll(regex)) {
+      markers.push({ state: m[1], index: m.index, line: lineAt(starts, m.index), form, tag: null });
+    }
+  }
+  markers.sort((a, b) => a.index - b.index);
   if (markers.length === 0) return [];
 
   const findings: MarkerQualityFinding[] = [];
@@ -216,9 +248,12 @@ function analyzeFile(path: string, text: string): MarkerQualityFinding[] {
     fix: string,
   ) => findings.push({ code, severity: "warning", ...(screen && { screen }), state, file: path, line, message, fix });
 
-  /* 1 — thin: marker on a verifiably bare element that renders nothing. */
+  /* 1 — thin: marker on a verifiably bare element that renders nothing.
+     Attribute form only — a comment or identifier marker says nothing
+     about the element it annotates, so emptiness is unprovable. */
   const thinSeen = new Set<string>();
   for (const m of markers) {
+    if (m.form !== "attribute") continue;
     if (!m.tag || !m.tag.attributeBare || !m.tag.rendersNothing) continue;
     const key = `${m.tag.start}:${m.state}`;
     if (thinSeen.has(key)) continue;
@@ -253,6 +288,7 @@ function analyzeFile(path: string, text: string): MarkerQualityFinding[] {
   }
   const bareByShape = new Map<string, Marker[]>();
   for (const m of markers) {
+    if (m.form !== "attribute") continue; // bareness is unprovable for comment/identifier forms
     if (!m.tag || !m.tag.attributeBare || !m.tag.rendersNothing) continue;
     const key = shapeKey(m.tag);
     bareByShape.set(key, [...(bareByShape.get(key) ?? []), m]);
@@ -274,7 +310,9 @@ function analyzeFile(path: string, text: string): MarkerQualityFinding[] {
     }
   }
 
-  /* 3 — static: conditional-by-nature state with no conditional signal. */
+  /* 3 — static: conditional-by-nature state with no conditional signal.
+     Applies to every marker form — an unconditional loading/empty/error
+     render path is suspicious no matter how it is marked. */
   const staticSeen = new Set<string>();
   for (const m of markers) {
     if (!isConditionalByNature(m.state)) continue;
@@ -284,12 +322,22 @@ function analyzeFile(path: string, text: string): MarkerQualityFinding[] {
     const window = lines.slice(Math.max(0, m.line - 1 - STATIC_WINDOW_LINES), m.line).join("\n");
     if (CONDITIONAL_SIGNAL.test(window)) continue;
     if (insideStateNamedComponent(lines, m.line, m.state)) continue;
+    const spelled =
+      m.form === "attribute"
+        ? `data-ux-state="${m.state}"`
+        : m.form === "comment"
+          ? `the "data-ux-state: ${m.state}" comment marker`
+          : `the "ux-state:${m.state}" identifier marker`;
+    const gate =
+      m.form === "attribute"
+        ? `(e.g. {isLoading && <Skeleton data-ux-state="loading" />})`
+        : `(e.g. if isLoading { … } / when (state) { … })`;
     emit(
       "state-marker-static",
       m.state,
       m.line,
-      `data-ux-state="${m.state}" has no conditional-rendering signal nearby (found: ${JSON.stringify(lines[m.line - 1].trim())}) — a "${m.state}" state rendered unconditionally is either always or never shown.`,
-      `Gate the element behind the condition that produces "${m.state}" (e.g. {isLoading && <Skeleton data-ux-state="loading" />}), or move the marker into a dedicated component rendered from a conditional call site.`,
+      `${spelled} has no conditional-rendering signal nearby (found: ${JSON.stringify(lines[m.line - 1].trim())}) — a "${m.state}" state rendered unconditionally is either always or never shown.`,
+      `Gate the marked render path behind the condition that produces "${m.state}" ${gate}, or move the marker into a dedicated state-named component rendered from a conditional call site.`,
     );
   }
 
@@ -305,7 +353,7 @@ function analyzeFile(path: string, text: string): MarkerQualityFinding[] {
 export function analyzeMarkerQuality(files: Array<{ path: string; text: string }>): MarkerQualityFinding[] {
   const findings: MarkerQualityFinding[] = [];
   for (const file of files) {
-    if (!file.text.includes("data-ux-state")) continue;
+    if (!/data-ux-state|ux-state:/.test(file.text)) continue;
     findings.push(...analyzeFile(file.path, file.text));
   }
   return findings.sort(
