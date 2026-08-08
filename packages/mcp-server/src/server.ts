@@ -295,12 +295,25 @@ export function createServer(store = new ProjectStore()): McpServer {
       }
       const screen = ws.project.screens.find((s) => s.id === comment.screen);
       const blocks = screen?.layout?.blocks;
-      const anchoredBlock =
-        comment.block && blocks
-          ? comment.block.index < blocks.length
-            ? blocks[comment.block.index]
-            : { note: `stale anchor: pin recorded block index ${comment.block.index} (${comment.block.type}) but the layout now has ${blocks.length} blocks — locate the block by its recorded type/label instead` }
-          : null;
+      const anchoredBlock = (() => {
+        if (!comment.block || !blocks) return null;
+        const { index, type, label } = comment.block;
+        if (index >= blocks.length) {
+          return { note: `stale anchor: pin recorded block index ${index} (${type}) but the layout now has ${blocks.length} blocks — locate the block by its recorded type/label instead`, recorded: comment.block };
+        }
+        const at = blocks[index] as { type?: string; label?: string };
+        // The index still resolves, but a reorder/edit can make it point at a
+        // different block than the pin was placed on. Verify the recorded
+        // type (and label, when captured) still match before trusting it.
+        if (at.type !== type || (label !== undefined && at.label !== label)) {
+          return {
+            note: `stale anchor: block ${index} was a "${type}"${label !== undefined ? ` ("${label}")` : ""} when pinned but is now a "${at.type ?? "?"}"${at.label !== undefined ? ` ("${at.label}")` : ""} — the layout was reordered or edited; locate the intended block by the recorded type/label`,
+            recorded: comment.block,
+            blockNowAtIndex: at,
+          };
+        }
+        return at;
+      })();
       const journeyRefs = ws.project.journeys.flatMap((j) =>
         Object.entries(j.states)
           .filter(([, s]) => s.screen === comment.screen)

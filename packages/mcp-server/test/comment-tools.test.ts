@@ -94,7 +94,7 @@ describe("comment_context — the work packet", () => {
     await close();
   });
 
-  it("flags a stale block anchor instead of returning the wrong block", async () => {
+  it("flags an out-of-range block anchor instead of returning the wrong block", async () => {
     const stale = {
       comments: [{
         id: "c-stale", screen: "CartScreen", state: "default", x: 1, y: 1, text: "stale", resolved: false,
@@ -104,6 +104,23 @@ describe("comment_context — the work packet", () => {
     const { call, close } = await connect(stale);
     const r = await call("comment_context", { id: "c-stale" });
     expect(r.anchoredBlock.note).toMatch(/stale anchor/);
+    expect(r.anchoredBlock.recorded).toEqual({ index: 9, type: "button", label: "Checkout" });
+    await close();
+  });
+
+  it("flags a reordered anchor (index in range but wrong block) instead of returning it silently", async () => {
+    // index 0 in the layout is the header, not the recorded button — a reorder.
+    const reordered = {
+      comments: [{
+        id: "c-reorder", screen: "CartScreen", state: "default", x: 1, y: 1, text: "reordered", resolved: false,
+        createdAt: "2026-08-08T00:00:00.000Z", block: { index: 0, type: "button", label: "Checkout" },
+      }],
+    };
+    const { call, close } = await connect(reordered);
+    const r = await call("comment_context", { id: "c-reorder" });
+    expect(r.anchoredBlock.note).toMatch(/reordered or edited/);
+    expect(r.anchoredBlock.blockNowAtIndex.type).toBe("header");
+    expect(r.anchoredBlock.recorded.type).toBe("button");
     await close();
   });
 
