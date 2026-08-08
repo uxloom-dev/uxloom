@@ -27,11 +27,31 @@ export function critique(project: Project, options?: CriticOptions): Report {
 
   let designed = 0;
   let required = 0;
+  // Declaration coverage: the critics only see declared data — surface how
+  // much of the design was actually checkable, so a clean report over an
+  // undeclared design can't masquerade as a verified one.
+  const declarations = {
+    colors: { declared: 0, total: 0 },
+    targets: { declared: 0, total: 0 },
+    budgets: { declared: 0, total: 0 },
+  };
   for (const screen of project.screens) {
     required += screen.requiredStates.length;
     designed += screen.requiredStates.filter((s) =>
       screen.designedStates.includes(s),
     ).length;
+    for (const component of screen.components ?? []) {
+      declarations.colors.total++;
+      if (component.fg && component.bg) declarations.colors.declared++;
+      if (component.interactive) {
+        declarations.targets.total++;
+        if (component.minTargetPx !== undefined) declarations.targets.declared++;
+      }
+      if (component.label) {
+        declarations.budgets.total++;
+        if (component.label.maxChars !== undefined) declarations.budgets.declared++;
+      }
+    }
   }
 
   return {
@@ -42,6 +62,7 @@ export function critique(project: Project, options?: CriticOptions): Report {
       journeys: project.journeys.length,
       screens: project.screens.length,
       stateCoverage: { designed, required },
+      declarations,
     },
   };
 }

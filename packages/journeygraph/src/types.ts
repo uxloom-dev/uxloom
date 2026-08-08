@@ -164,5 +164,17 @@ export interface Report {
     screens: number;
     /** designedStates present / requiredStates declared, across screens. */
     stateCoverage: { designed: number; required: number };
+    /**
+     * How much the critics could actually see: checks only run on declared
+     * data, so a clean report over undeclared components proves little.
+     * colors: components with fg+bg / all components; targets: with
+     * minTargetPx / interactive components; budgets: labels with maxChars /
+     * all labels.
+     */
+    declarations: {
+      colors: { declared: number; total: number };
+      targets: { declared: number; total: number };
+      budgets: { declared: number; total: number };
+    };
   };
 }

@@ -101,11 +101,18 @@ export function runCheck(fileArg?: string, flags: string[] = []): never {
     console.log();
   }
 
-  const { stateCoverage } = report.summary;
+  const { stateCoverage, declarations } = report.summary;
   const pct = stateCoverage.required
     ? Math.round((100 * stateCoverage.designed) / stateCoverage.required)
     : 100;
   console.log(`state coverage: ${stateCoverage.designed}/${stateCoverage.required} required states designed (${pct}%)`);
+  const d = declarations;
+  const undeclared =
+    d.colors.total - d.colors.declared + d.targets.total - d.targets.declared + d.budgets.total - d.budgets.declared;
+  console.log(
+    `checkable declarations: colors ${d.colors.declared}/${d.colors.total} · targets ${d.targets.declared}/${d.targets.total} · label budgets ${d.budgets.declared}/${d.budgets.total}` +
+    (undeclared > 0 ? yellow(`  (${undeclared} undeclared — the critics cannot see what isn't declared)`) : ""),
+  );
   if (suppressed > 0) console.log(dim(`${suppressed} finding(s) suppressed by baseline`));
   if (errors === 0 && warnings === 0) {
     console.log(green("✔ no findings — every journey complete, every contract met\n"));

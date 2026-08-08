@@ -66,9 +66,26 @@ grouped into three independent build lanes with strict file ownership.
 
 ## Explicitly deferred (recorded, not hidden)
 
-Figma/Penpot bridge, drag-editing canvas, PNG/PDF export (needs a browser
-dependency), audit tiers 4–5, hosted collaboration. Each needs demand
-evidence; none block company adoption the way R1–R7 did.
+From the review's broader sections, consciously open after v0.6:
+
+- **Figma/Penpot bridge, drag-editing canvas** — designers can now review
+  with veto power (comments); authoring remains agent/file-driven
+- **PNG/PDF export** — needs a browser dependency; static HTML covers
+  sharing today
+- **Audit tiers 4–5** (fixture rendering, browser verification) and
+  **native-platform audit** (SwiftUI/Compose markers) — tier 2.5
+  heuristics narrow washing on web; native audit needs per-platform
+  runners
+- **Accessibility breadth** (focus order, keyboard navigation, motion) —
+  today's critics cover contrast + target size; broader WCAG modeling is
+  a design problem, not a threshold
+- **Interaction-behavior specs** (sort/filter/validation semantics) —
+  guards + data shapes carry intent; full behavior contracts are a format
+  evolution
+- **`uxloom diff`** (human-reviewable design diffs for PRs) and a real
+  docs site — ecosystem maturity items
+- ~~Declaration-coverage blindness~~ — **closed in v0.6.1**: the report
+  now states how much of the design was actually checkable.
 
 ## Lanes and ownership
 
