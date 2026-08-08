@@ -131,6 +131,30 @@ export const DEFECTS = {
     };
     return [{ code: "label-overflow", screen: p.screens[0].id }];
   },
+  "rationale-missing": (p) => {
+    const GOOD = {
+      decision: "Linear step flow",
+      reasoning: "Completion tasks favor a distraction-free linear flow with visible progress; category convention for this product shape.",
+      alternatives: [{ option: "Hub and spoke", pros: ["free order"], cons: ["progress ambiguity"] }],
+    };
+    p.rationale = GOOD;
+    for (const j of p.journeys) j.rationale = GOOD;
+    for (const s of p.screens) s.rationale = GOOD;
+    delete p.screens[3].rationale;
+    return [{ code: "rationale-missing", screen: p.screens[3].id }];
+  },
+  "rationale-thin": (p) => {
+    const GOOD = {
+      decision: "Linear step flow",
+      reasoning: "Completion tasks favor a distraction-free linear flow with visible progress; category convention for this product shape.",
+      alternatives: [{ option: "Hub and spoke", pros: ["free order"], cons: ["progress ambiguity"] }],
+    };
+    p.rationale = GOOD;
+    for (const j of p.journeys) j.rationale = GOOD;
+    for (const s of p.screens) s.rationale = GOOD;
+    p.screens[2].rationale = { decision: "Card grid", reasoning: "Looks modern and clean here" };
+    return [{ code: "rationale-thin", screen: p.screens[2].id }];
+  },
 };
 
 /** Build the golden set: one isolation case per defect + compound cases. */

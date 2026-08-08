@@ -260,6 +260,17 @@ npx uxloom diff old.json new.json --markdown   # PR-comment ready
 <p><strong>Design tokens</strong> — project-level <code>tokens</code> theme the preview and document the system: <code>{ "colors": { "accent": "#2F6B52", "bg": "#FAF9F6", "surface": "#FFFFFF", "text": "#2B2725", "muted": "#7A716B" }, "radius": 8, "font": "Iowan Old Style, serif" }</code>. Verify pairs with uxloom:palette_check.</p>
 <p><strong>Content-rich blocks</strong> — table blocks take <code>columns: ["Recipient", "Status", "Sent"]</code>; text/hero blocks take <code>copy</code> (real copy, not lorem); any block takes <code>source</code> naming its data binding. Screens take <code>data</code> (<code>{ "messages": "Message[]", "filter": "StatusFilter" }</code>) so implementers know the shape.</p>
 <p><strong>Fragments (team scale)</strong> — the base file may declare <code>"include": ["designs/*.json"]</code>; fragment files are <code>{ "journeys": [...], "screens": [...] }</code> merged at load. Duplicate ids across files are errors. MCP tools write to the base file; fragments are edited as files.</p>
+<p><strong>Design rationale (evidence-based design, v0.8)</strong> — project, journeys, and screens carry the evidence behind decisions:</p>
+<pre><code>
+"rationale": {
+  "decision": "Single-column checkout",
+  "reasoning": "Completion task; category convention is a distraction-free linear flow…",
+  "alternatives": [{ "option": "Two-column", "pros": ["cart visible"], "cons": ["collapses on mobile"] }],
+  "sources": ["https://baymard.com/…"],
+  "confidence": "high"
+}
+</code></pre>
+<p>Adoption-gated enforcement: once any rationale exists (or config sets <code>"rationale": "required"</code>), undocumented decisions become <code>rationale-missing</code> warnings and weak ones <code>rationale-thin</code> (short reasoning, or no alternative with real pros AND cons). Process: <a href="https://github.com/uxloom-dev/uxloom/blob/main/design-intelligence.md">design-intelligence.md</a>; iterate with uxloom:design_review (max 3 rounds, enforced).</p>
 <p><strong>Config and baseline</strong> — <code>uxloom.config.json</code> overrides thresholds (<code>{ "thresholds": { "contrastRatio": 7, "expansionFactor": 1.5, "touchTargets": { "web": 44 } } }</code>). <code>uxloom check --update-baseline</code> freezes existing findings into <code>uxloom.baseline.json</code> (brownfield adoption: block only new drift). Never baseline findings you can fix now.</p>
 <p><strong>Reviewer comments</strong> — designers drop comments in the preview; open comments appear in validation as <code>reviewer-comment</code> warnings. Address the feedback, then resolve the comment in the preview. Never resolve without addressing.</p>
 <h3>Validation rules the schema enforces</h3>

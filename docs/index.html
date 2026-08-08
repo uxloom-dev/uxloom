@@ -71,6 +71,11 @@
     },
     {
       "@type": "Question",
+      "name": "Why should I trust the design an AI agent produces?",
+      "acceptedAnswer": { "@type": "Answer", "text": "UXLoom makes the agent show its work. Every major decision can carry rationale: the reasoning, rejected alternatives with pros and cons, sources for factual claims, and a confidence level. Undocumented or thin decisions become findings once adopted, an enforced design_review loop (max 3 rounds) critiques the design against market conventions, and the full evidence renders in the preview and exports — you see why every element is on screen, not just that it is." }
+    },
+    {
+      "@type": "Question",
       "name": "Is UXLoom free?",
       "acceptedAnswer": { "@type": "Answer", "text": "Yes. UXLoom is open source under the MIT license. The design data lives in a plain JSON file (uxloom.project.json) versioned in your own git repository." }
     }
@@ -369,7 +374,7 @@
       UXLoom
     </a>
     <nav class="nav-links" aria-label="Primary">
-      <span class="pill">v0.7</span>
+      <span class="pill">v0.8</span>
       <a href="/docs.html">Docs</a>
       <a href="https://github.com/uxloom-dev/uxloom">GitHub</a>
       <a href="https://www.npmjs.com/package/uxloom">npm</a>
@@ -761,6 +766,19 @@
           implemented with file:line evidence, unimplemented, or unproven. Static
           analysis never grants a pass without evidence, and the exit code gates CI —
           design completeness and implementation fidelity, both enforced.</p>
+        </details>
+        <details>
+          <summary>Why should I trust the design an AI agent produces?</summary>
+          <p>Because UXLoom makes the agent show its work. Every major decision —
+          information architecture, flows, screen patterns, colors — can carry
+          <code>rationale</code>: the reasoning, the alternatives that were
+          rejected (with their genuine pros and cons), sources for factual
+          claims, and a confidence level. Once a project adopts this,
+          undocumented or thin decisions become findings, an iterative
+          <code>design_review</code> loop (maximum 3 rounds, enforced) critiques
+          the design against market conventions, and the full evidence renders
+          in the preview and exports — so you see <em>why</em> every element is
+          on screen, not just that it is.</p>
         </details>
         <details>
           <summary>Is UXLoom free?</summary>

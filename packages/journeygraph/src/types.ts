@@ -43,6 +43,8 @@ export interface Journey {
   states: Record<string, JourneyState>;
   /** Scope to a platform subset (divergent mobile/desktop flows). */
   platforms?: PlatformId[];
+  /** Evidence behind this flow's shape. */
+  rationale?: Rationale;
 }
 
 export interface Label {
@@ -111,6 +113,15 @@ export interface Block {
   children?: Block[];
 }
 
+/** Evidence behind a design decision — makes intelligence verifiable. */
+export interface Rationale {
+  decision: string;
+  reasoning: string;
+  alternatives?: Array<{ option: string; pros: string[]; cons: string[] }>;
+  sources?: string[];
+  confidence?: "low" | "medium" | "high";
+}
+
 /** Design tokens — applied by the preview, verifiable by palette_check. */
 export interface Tokens {
   colors?: { accent?: string; bg?: string; surface?: string; text?: string; muted?: string };
@@ -135,6 +146,8 @@ export interface Screen {
   layout?: { blocks: Block[] };
   /** Named data shape this screen renders, field → type descriptor. */
   data?: Record<string, string>;
+  /** Evidence behind this screen's design decisions. */
+  rationale?: Rationale;
 }
 
 export interface Project {
@@ -148,6 +161,8 @@ export interface Project {
   tokens?: Tokens;
   /** Fragment globs (relative to the project file) merged at load time. */
   include?: string[];
+  /** Evidence behind product-level decisions: IA, brand direction, patterns. */
+  rationale?: Rationale;
 }
 
 /** A single issue reported by a critic. */

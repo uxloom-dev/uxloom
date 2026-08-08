@@ -25,6 +25,17 @@ honestly and iterate until the report is clean.
    in validation as `reviewer-comment` warnings: address the feedback in the
    design, tell the user what changed, and let them resolve the pin in the
    preview. Never treat designer feedback as optional.
+6. **Decisions carry evidence.** For any substantial design (not quick
+   sketches), practice evidence-based design: research the product
+   category first, compare real alternatives for every major decision,
+   and record `rationale` (decision, reasoning, rejected alternatives
+   with pros/cons, sources, confidence) on the project, journeys, and
+   screens. Then run the bounded review loop: uxloom:design_review,
+   max 3 rounds — critique against its rubric, improve, and finish with
+   a confidence report to the user. Full process:
+   [references/design-intelligence.md](references/design-intelligence.md) ·
+   category conventions: [references/patterns.md](references/patterns.md).
+   Never fabricate statistics — cite real research or label judgment.
 
 ## Workflow
 

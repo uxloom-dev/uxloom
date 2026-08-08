@@ -32,6 +32,40 @@ export interface ReviewerComment {
 
 export interface UxloomConfig {
   thresholds?: CriticOptions;
+  /** "required" forces rationale enforcement before any rationale exists. */
+  rationale?: "required";
+}
+
+/** Critic options derived from config (rationale mode folded in). */
+export function criticOptionsFor(config: UxloomConfig): CriticOptions {
+  return { ...config.thresholds, requireRationale: config.rationale === "required" };
+}
+
+export interface ReviewRound {
+  round: number;
+  at: string;
+  errors: number;
+  warnings: number;
+  rationale: { documented: number; total: number };
+  notes?: string;
+}
+
+export function reviewsPathFor(projectPath: string): string {
+  return projectPath.replace(/\.json$/, "") + ".reviews.json";
+}
+
+export function loadReviews(path: string): ReviewRound[] {
+  if (!existsSync(path)) return [];
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as { rounds?: ReviewRound[] };
+    return Array.isArray(parsed.rounds) ? parsed.rounds : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveReviews(path: string, rounds: ReviewRound[]): void {
+  writeFileSync(path, JSON.stringify({ rounds }, null, 2) + "\n");
 }
 
 export interface Baseline {

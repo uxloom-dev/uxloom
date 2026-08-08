@@ -2,9 +2,9 @@
 
 | Dimension | Grade | Evidence |
 |---|---|---|
-| Critic correctness | **A** | precision 1.000, recall 1.000, F1 1.000 over 20 golden cases (34 planted defects) |
+| Critic correctness | **A** | precision 1.000, recall 1.000, F1 1.000 over 22 golden cases (36 planted defects) |
 | Determinism | **A** | 25 in-process runs + 2 fresh processes → 1 unique report hash |
-| Performance | **A** | 10 screens: 0.0ms · 100 screens: 0.2ms · 500 screens: 1.3ms · 1000 screens: 4.1ms · CLI cold start 81ms |
+| Performance | **A** | 10 screens: 0.0ms · 100 screens: 0.2ms · 500 screens: 1.5ms · 1000 screens: 4.9ms · CLI cold start 84ms |
 | Robustness | **A** | 500 fuzzed inputs → 0 crashes (424 rejected cleanly, 76 still-valid accepted) |
 
 ## Per-code detection
@@ -24,6 +24,8 @@
 | contrast-below-aa | 4 | 0 | 0 | 1.00 | 1.00 |
 | target-too-small | 2 | 0 | 0 | 1.00 | 1.00 |
 | label-overflow | 3 | 0 | 0 | 1.00 | 1.00 |
+| rationale-missing | 1 | 0 | 0 | 1.00 | 1.00 |
+| rationale-thin | 1 | 0 | 0 | 1.00 | 1.00 |
 
 All golden cases matched ground truth exactly.
 

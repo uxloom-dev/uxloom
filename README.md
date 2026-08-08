@@ -60,6 +60,13 @@ npx uxloom audit     # implementation drift — web AND native (Swift/Kotlin/
 npx uxloom diff      # human-readable design diffs for PR review
 ```
 
+**Evidence-based design**: every decision in the contract can carry its
+rationale — reasoning, rejected alternatives with pros/cons, sources,
+confidence — enforced by the critics once adopted, iterated through a
+bounded `design_review` loop (max 3 rounds), and shown to stakeholders in
+the preview's evidence panel (ⓘ) and exports. The design doesn't just
+validate; it argues its case.
+
 CI-native: `check` and `audit` take `--json`, `--sarif` (GitHub code
 scanning), and `--github` (inline PR annotations). Brownfield-ready:
 `--update-baseline` freezes existing findings so only *new* drift blocks;

@@ -5,6 +5,7 @@ import { wcagContrast } from "./contrast.js";
 import { touchTargets } from "./touch-targets.js";
 import { textExpansion } from "./text-expansion.js";
 import { a11y } from "./a11y.js";
+import { rationale as rationaleCritic } from "./rationale.js";
 
 export { journeyCompleteness } from "./journey-completeness.js";
 export { stateCoverage } from "./state-coverage.js";
@@ -12,6 +13,7 @@ export { wcagContrast, contrastRatio, relativeLuminance } from "./contrast.js";
 export { touchTargets } from "./touch-targets.js";
 export { textExpansion } from "./text-expansion.js";
 export { a11y } from "./a11y.js";
+export { rationale, rationaleCoverage } from "./rationale.js";
 
 export { type CriticOptions, DEFAULT_OPTIONS } from "./options.js";
 import { withDefaults, type CriticOptions } from "./options.js";
@@ -26,6 +28,7 @@ export function critique(project: Project, options?: CriticOptions): Report {
     ...touchTargets(project, opts.touchTargets),
     ...textExpansion(project, opts.expansionFactor),
     ...a11y(project),
+    ...rationaleCritic(project, opts.requireRationale),
   ];
 
   let designed = 0;

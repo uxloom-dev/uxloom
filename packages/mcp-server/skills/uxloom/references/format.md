@@ -143,6 +143,26 @@ know the shape.
 "screens": [...] }` merged at load. Duplicate ids across files are errors.
 MCP tools write to the base file; fragments are edited as files.
 
+**Design rationale (evidence-based design, v0.8)** — project, journeys,
+and screens carry the evidence behind decisions:
+
+```json
+"rationale": {
+  "decision": "Single-column checkout",
+  "reasoning": "Completion task; category convention is a distraction-free linear flow…",
+  "alternatives": [{ "option": "Two-column", "pros": ["cart visible"], "cons": ["collapses on mobile"] }],
+  "sources": ["https://baymard.com/…"],
+  "confidence": "high"
+}
+```
+
+Adoption-gated enforcement: once any rationale exists (or config sets
+`"rationale": "required"`), undocumented decisions become
+`rationale-missing` warnings and weak ones `rationale-thin` (short
+reasoning, or no alternative with real pros AND cons). Process:
+[design-intelligence.md](design-intelligence.md); iterate with
+uxloom:design_review (max 3 rounds, enforced).
+
 **Config and baseline** — `uxloom.config.json` overrides thresholds
 (`{ "thresholds": { "contrastRatio": 7, "expansionFactor": 1.5,
 "touchTargets": { "web": 44 } } }`). `uxloom check --update-baseline`

@@ -15,7 +15,15 @@ import { createRequire } from "node:module";
 import { ProjectStore } from "./store.js";
 import { briefQuestions, compileBrief } from "./brief.js";
 import { loadMap, runAudit } from "./audit.js";
-import { commentFindings, loadWorkspace } from "./workspace.js";
+import {
+  commentFindings,
+  criticOptionsFor,
+  loadReviews,
+  loadWorkspace,
+  reviewsPathFor,
+  saveReviews,
+} from "./workspace.js";
+import { rationaleCoverage } from "@uxloom/critics";
 
 // Version is DERIVED from package.json — never hardcode it here again.
 // (Hand-bumped strings drifted three releases in a row before this.)
@@ -171,6 +179,68 @@ export function createServer(store = new ProjectStore()): McpServer {
   );
 
   server.tool(
+    "design_review",
+    "One iterative design-review round (max 3 per project — enforced). Computes validation + rationale coverage, persists the round with deltas to <project>.reviews.json, and returns a structured rubric to critique the design against: completeness, evidence, consistency, market fit, accessibility, honesty. Address the rubric, improve the design, then call again. Round 4 is refused: present results to the user instead.",
+    {
+      notes: z.string().optional().describe("What this round focused on / what changed since the last round"),
+    },
+    async ({ notes }) => {
+      const ws = loadWorkspace(store.path);
+      const reviewsPath = reviewsPathFor(ws.projectPath);
+      const rounds = loadReviews(reviewsPath);
+      if (rounds.length >= 3) {
+        return json({
+          allowed: false,
+          roundsUsed: rounds.length,
+          maxRounds: 3,
+          history: rounds,
+          message:
+            "All 3 review rounds are used. Present the design and its evidence to the user — further iteration needs their direction, not more self-review.",
+        });
+      }
+      const report = critique(ws.project, criticOptionsFor(ws.config));
+      const coverage = rationaleCoverage(ws.project);
+      const previous = rounds.at(-1);
+      const entry = {
+        round: rounds.length + 1,
+        at: new Date().toISOString(),
+        errors: report.summary.errors,
+        warnings: report.summary.warnings,
+        rationale: { documented: coverage.documented, total: coverage.total },
+        notes,
+      };
+      saveReviews(reviewsPath, [...rounds, entry]);
+      return json({
+        allowed: true,
+        round: entry.round,
+        maxRounds: 3,
+        delta: previous
+          ? {
+              errors: entry.errors - previous.errors,
+              warnings: entry.warnings - previous.warnings,
+              rationaleDocumented: entry.rationale.documented - previous.rationale.documented,
+            }
+          : null,
+        validation: report.summary,
+        openFindings: report.findings.slice(0, 30),
+        rationaleCoverage: coverage,
+        rubric: [
+          "COMPLETENESS — every journey reaches a final state; every screen contract covers empty/loading/error or carries a written exemption; no validation errors remain.",
+          "EVIDENCE — every screen, journey, and the project carry rationale with ≥1 rejected alternative (real pros AND cons) and sources for factual claims; nothing thin.",
+          "CONSISTENCY — tokens used coherently; component semantics, state naming, and copy tone uniform across screens; labels carry i18n keys and budgets.",
+          "MARKET FIT — compare against references/patterns.md conventions for this product category (and live research when available): does each major pattern choice match or deliberately diverge, and is divergence argued in the rationale?",
+          "ACCESSIBILITY — interactive elements labeled, contrast declared and passing, targets sized, decorative motion has fallbacks.",
+          "HONESTY — exemptions have real reasons; no contract weakened to silence a finding; reviewer comments addressed, not dismissed.",
+        ],
+        instruction:
+          entry.round < 3
+            ? `Round ${entry.round} of 3. Critique the design against every rubric line, fix what you find, then call design_review again.`
+            : "Final round (3 of 3). Fix what you find, then present the design with its full evidence — decisions, alternatives, sources, confidence — to the user.",
+      });
+    },
+  );
+
+  server.tool(
     "project_audit",
     "Audit the implementation against the design contract (drift detection). Static tiers: the uxloom.map.json screen registry and data-ux-screen/data-ux-state markers in source. Returns per-state verdicts (implemented with file:line evidence / unimplemented / unproven) and findings with fixes. When implementing screens from the contract, emit data-ux-state markers so the code stays self-auditing.",
     {
@@ -193,7 +263,7 @@ export function createServer(store = new ProjectStore()): McpServer {
     {},
     async () => {
       const ws = loadWorkspace(store.path);
-      const report = critique(ws.project, ws.config.thresholds);
+      const report = critique(ws.project, criticOptionsFor(ws.config));
       const extra = [...ws.loadFindings, ...commentFindings(ws.comments)];
       return json({
         ...report,

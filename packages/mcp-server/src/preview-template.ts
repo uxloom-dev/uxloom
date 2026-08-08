@@ -9,8 +9,13 @@
  * wireframe stays grayscale. Comment mode drops pins on the mock and
  * persists them via the /comments endpoints.
  *
+ * When the project, a journey, or a screen carries design rationale
+ * (R20), an "ⓘ why" toggle reveals the evidence panel: decision,
+ * reasoning, alternatives argued, sources, and a confidence chip.
+ *
  * renderStandalone() turns this same template into a static, shareable
- * HTML file: project data embedded, SSE and comment mode removed.
+ * HTML file: project data embedded, SSE and comment mode removed. The
+ * rationale panel is kept — it is the stakeholder-confidence deliverable.
  */
 export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
 <html lang="en">
@@ -149,6 +154,40 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
               color: var(--dim); }
   .err-load { margin: auto; color: var(--err); }
 
+  /* rationale (the "why" evidence panel, R20) */
+  .whypanel { width: 340px; flex-shrink: 0; background: var(--panel); border-left: 1px solid var(--line);
+              overflow-y: auto; padding: 14px 16px; outline: none; }
+  .whytop { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .whytitle { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+  .whyclose { color: var(--dim); font-size: 14px; padding: 2px 6px; border-radius: 6px; }
+  .whyclose:hover, .whyclose:focus-visible { background: #e6e9e6; color: var(--ink); }
+  .rat-scope { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px;
+               color: var(--dim); margin-bottom: 2px; }
+  .rat-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .rat-decision { font-size: 14px; font-weight: 600; }
+  .rat-conf { display: inline-block; font-size: 10.5px; border-radius: 999px; padding: 1px 9px;
+              border: 1px solid var(--line); color: var(--dim); white-space: nowrap; }
+  .rat-conf.medium { border-color: var(--accent); color: var(--accent); }
+  .rat-conf.high { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .rat-reason { font-size: 12.5px; margin: 6px 0 10px; }
+  .rat-alts { width: 100%; border-collapse: collapse; font-size: 11.5px; margin: 8px 0 10px; }
+  .rat-alts caption { text-align: left; font-size: 10.5px; text-transform: uppercase;
+                      letter-spacing: .05em; color: var(--dim); margin-bottom: 4px; }
+  .rat-alts th, .rat-alts td { border: 1px solid var(--line); padding: 4px 6px; text-align: left;
+                               vertical-align: top; }
+  .rat-alts th { background: #f1f3f1; font-size: 10px; text-transform: uppercase;
+                 letter-spacing: .05em; color: var(--dim); }
+  .rat-opt { font-weight: 600; }
+  .rat-pros, .rat-cons { list-style: disc; padding-left: 14px; margin: 0; }
+  .rat-pros li { color: #2e7d4f; }
+  .rat-cons li { color: var(--err); }
+  .rat-src { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+  .rat-lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--dim); }
+  .rat-src a { color: var(--accent); font-size: 12px; }
+  .whydetails { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 10px; }
+  .whydetails summary { cursor: pointer; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+  .whymark { margin-left: 5px; font-size: 11px; opacity: .55; }
+
   /* comment mode */
   .cbtn { border: 1px solid var(--line); border-radius: 999px; padding: 3px 12px; font-size: 12.5px; }
   .cbtn.on { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -221,12 +260,14 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
   <div class="stage" id="stage"></div>
   <div class="meta" id="meta"></div>
 </main>
+<div id="why" class="whypanel" role="complementary" aria-label="Design rationale" tabindex="-1" hidden></div>
 <script>
 "use strict";
 var STATIC_INFO = null;
 /*__UXLOOM_STATIC__*/
 var data = null, comments = [], sel = { screen: null, state: "default" }, viewport = "desktop";
 var commentMode = false;
+var whyOpen = false;
 /* assigned by the edit-mode section below; stripped from static exports */
 var EDIT = null;
 
@@ -510,6 +551,103 @@ function chromeFor(vp) {
   return c;
 }
 
+/* ----------- R20: design rationale — the "why" evidence panel ----------- */
+/* the toggle is visible only when the current screen OR the project carries
+   rationale; journeys surface theirs via the panel and a muted meta chip */
+function hasWhyContent(screen) {
+  return !!((screen && screen.rationale) || (data && data.rationale));
+}
+function journeysForScreen(screenId) {
+  return (data.journeys || []).filter(function (j) {
+    return Object.keys(j.states).some(function (sn) { return j.states[sn].screen === screenId; });
+  });
+}
+function hostOf(u) {
+  try { return new URL(u).hostname || u; } catch (e) { return u; }
+}
+/* one rationale rendered as evidence: decision, confidence, reasoning,
+   the alternatives that were argued over, and the sources it leans on.
+   Every field is optional — show what exists, never invent the rest. */
+function ratBody(r) {
+  var box = h("div", "rat");
+  var head = h("div", "rat-head");
+  head.appendChild(h("h3", "rat-decision", r.decision || "(no decision recorded)"));
+  if (r.confidence === "low" || r.confidence === "medium" || r.confidence === "high")
+    head.appendChild(h("span", "rat-conf " + r.confidence, r.confidence + " confidence"));
+  box.appendChild(head);
+  if (r.reasoning) box.appendChild(h("p", "rat-reason", r.reasoning));
+  if (r.alternatives && r.alternatives.length) {
+    var tbl = h("table", "rat-alts");
+    tbl.appendChild(h("caption", null, "Alternatives considered"));
+    var thr = h("tr");
+    ["Option", "Pros", "Cons"].forEach(function (t) { thr.appendChild(h("th", null, t)); });
+    tbl.appendChild(thr);
+    r.alternatives.forEach(function (a) {
+      var tr = h("tr");
+      tr.appendChild(h("td", "rat-opt", a.option || ""));
+      var ptd = h("td"), pul = h("ul", "rat-pros");
+      (a.pros || []).forEach(function (p) { pul.appendChild(h("li", null, p)); });
+      ptd.appendChild(pul); tr.appendChild(ptd);
+      var ctd = h("td"), cul = h("ul", "rat-cons");
+      (a.cons || []).forEach(function (c) { cul.appendChild(h("li", null, c)); });
+      ctd.appendChild(cul); tr.appendChild(ctd);
+      tbl.appendChild(tr);
+    });
+    box.appendChild(tbl);
+  }
+  if (r.sources && r.sources.length) {
+    var src = h("div", "rat-src");
+    src.appendChild(h("span", "rat-lbl", "Sources"));
+    r.sources.forEach(function (u) {
+      var a = h("a", null, hostOf(u));
+      a.setAttribute("href", u);
+      a.setAttribute("target", "_blank");
+      a.setAttribute("rel", "noopener");
+      a.title = u;
+      src.appendChild(a);
+    });
+    box.appendChild(src);
+  }
+  return box;
+}
+function closeWhy() {
+  whyOpen = false;
+  render();
+  var t = document.getElementById("whytoggle");
+  if (t) t.focus();
+}
+function renderWhy(screen) {
+  var panel = document.getElementById("why");
+  panel.innerHTML = "";
+  if (!hasWhyContent(screen)) whyOpen = false;
+  panel.hidden = !whyOpen;
+  if (!whyOpen) return;
+  var top = h("div", "whytop");
+  top.appendChild(h("h2", "whytitle", "Design rationale"));
+  var x = h("button", "whyclose", "\\u2715");
+  x.setAttribute("aria-label", "Close rationale panel");
+  x.onclick = function () { closeWhy(); };
+  top.appendChild(x);
+  panel.appendChild(top);
+  if (screen && screen.rationale) {
+    panel.appendChild(h("div", "rat-scope", screen.id));
+    panel.appendChild(ratBody(screen.rationale));
+  }
+  if (data && data.rationale) {
+    var pd = h("details", "whydetails");
+    pd.appendChild(h("summary", null, "Product direction"));
+    pd.appendChild(ratBody(data.rationale));
+    panel.appendChild(pd);
+  }
+  if (screen) journeysForScreen(screen.id).forEach(function (j) {
+    if (!j.rationale) return;
+    var jd = h("details", "whydetails");
+    jd.appendChild(h("summary", null, "Flow rationale \\u00b7 " + j.id));
+    jd.appendChild(ratBody(j.rationale));
+    panel.appendChild(jd);
+  });
+}
+
 /* ------------------------------ render ------------------------------ */
 function render() {
   if (!data) return;
@@ -538,7 +676,13 @@ function render() {
   });
   side.appendChild(h("h2", null, "Screens"));
   (data.screens || []).forEach(function (s) {
-    var b = h("button", "snav" + (screen && s.id === screen.id ? " on" : ""), s.id);
+    var b = h("button", "snav" + (screen && s.id === screen.id ? " on" : ""));
+    b.appendChild(document.createTextNode(s.id));
+    if (s.rationale) {
+      var wm = h("span", "whymark", "\\u24d8");
+      wm.title = "has design rationale";
+      b.appendChild(wm);
+    }
     b.onclick = function () { pick(s.id, "default"); };
     side.appendChild(b);
   });
@@ -570,6 +714,19 @@ function render() {
     };
     bar.appendChild(cb);
     if (EDIT) bar.appendChild(EDIT.toggleButton());
+  }
+  if (hasWhyContent(screen)) {
+    var wb = h("button", "cbtn" + (whyOpen ? " on" : ""), "\\u24d8 why");
+    wb.id = "whytoggle";
+    wb.setAttribute("aria-pressed", whyOpen ? "true" : "false");
+    wb.setAttribute("aria-controls", "why");
+    wb.title = "Why: the design rationale behind this screen";
+    wb.onclick = function () {
+      whyOpen = !whyOpen;
+      render();
+      if (whyOpen) document.getElementById("why").focus();
+    };
+    bar.appendChild(wb);
   }
   if (STATIC_INFO) bar.appendChild(h("span", "chip", "static export \\u00b7 " + STATIC_INFO.generated));
   else bar.appendChild(h("span", "chip live", "\\u25cf live"));
@@ -636,7 +793,13 @@ function render() {
     (screen.exemptions || []).forEach(function (ex) {
       meta.appendChild(h("span", "note", "exempt " + ex.state + ": " + ex.reason));
     });
+    journeysForScreen(screen.id).forEach(function (j) {
+      if (j.rationale && j.rationale.decision)
+        meta.appendChild(h("span", "chip flowchip", "flow: " + j.rationale.decision));
+    });
   }
+
+  renderWhy(screen);
 }
 
 function boot(p) {
@@ -663,6 +826,9 @@ function load() {
     document.getElementById("stage").appendChild(h("div", "err-load", "Cannot load project: " + e.message));
   });
 }
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape" && whyOpen) closeWhy();
+});
 /*__UXLOOM_EDIT__*/
 /* ------------- structured edit mode (live preview only) ------------- */
 EDIT = (function () {

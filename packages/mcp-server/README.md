@@ -58,6 +58,7 @@ optional `uxloom.map.json` screen registry — both CI-ready.
 | `project_import` / `project_export` | Whole-design registration / retrieval in one call |
 | `palette_check` | WCAG AA check of design-token color pairs, with thin-margin flags |
 | `project_audit` | Implementation drift: per-state verdicts (implemented / unimplemented / unproven) with file:line evidence |
+| `design_review` | Iterative evidence-based review — max 3 rounds (enforced, persisted), six-part rubric incl. market fit; pairs with per-decision `rationale` in the format |
 | `project_validate` | Run every critic; iterate until zero errors |
 | `screen_critique` | Findings scoped to one screen |
 | `coverage_report` | Screens delivered vs. states the journeys need |

@@ -10,6 +10,7 @@ export {
   TransitionSchema,
   TokensSchema,
   FragmentSchema,
+  RationaleSchema,
 } from "./schema.js";
 
 import { ProjectSchema } from "./schema.js";

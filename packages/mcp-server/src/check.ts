@@ -1,10 +1,11 @@
 import { relative, resolve } from "node:path";
 import { createRequire } from "node:module";
 import type { Finding } from "@uxloom/journeygraph";
-import { critique } from "@uxloom/critics";
+import { critique, rationaleCoverage } from "@uxloom/critics";
 import {
   applyBaseline,
   commentFindings,
+  criticOptionsFor,
   fingerprint,
   loadWorkspace,
   saveBaseline,
@@ -44,7 +45,7 @@ export function runCheck(fileArg?: string, flags: string[] = []): never {
     process.exit(2);
   }
 
-  const report = critique(ws.project, ws.config.thresholds);
+  const report = critique(ws.project, criticOptionsFor(ws.config));
   const all: Finding[] = [
     ...ws.loadFindings,
     ...report.findings,
@@ -113,6 +114,13 @@ export function runCheck(fileArg?: string, flags: string[] = []): never {
     `checkable declarations: colors ${d.colors.declared}/${d.colors.total} · targets ${d.targets.declared}/${d.targets.total} · label budgets ${d.budgets.declared}/${d.budgets.total}` +
     (undeclared > 0 ? yellow(`  (${undeclared} undeclared — the critics cannot see what isn't declared)`) : ""),
   );
+  const rc = rationaleCoverage(ws.project);
+  if (rc.optedIn || ws.config.rationale === "required") {
+    console.log(
+      `design rationale: ${rc.documented}/${rc.total} decisions documented` +
+      (rc.documented < rc.total ? yellow("  (evidence-based design adopted — document the rest)") : green("  ✔ fully evidenced")),
+    );
+  }
   if (suppressed > 0) console.log(dim(`${suppressed} finding(s) suppressed by baseline`));
   if (errors === 0 && warnings === 0) {
     console.log(green("✔ no findings — every journey complete, every contract met\n"));

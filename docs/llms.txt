@@ -29,7 +29,19 @@ Claude, or any generator), designing user flows that must survive production
 
 Tools exposed: project_init, brief_start, brief_answer, journey_define,
 screen_register, project_import, project_export, palette_check,
-project_audit, project_validate, screen_critique, coverage_report.
+project_audit, project_validate, screen_critique, coverage_report,
+design_review (iterative evidence-based review, max 3 rounds).
+
+## Design intelligence (evidence-based decisions)
+
+Designs carry rationale: every project/journey/screen decision records
+its reasoning, rejected alternatives with pros and cons, sources, and
+confidence — enforced by the rationale critic once adopted (or via
+uxloom.config.json {"rationale":"required"}). The design_review tool runs
+a bounded iterative review loop (max 3 rounds, persisted with deltas)
+against a six-part rubric including market fit from a curated pattern
+library. Rationale renders in the preview and exports, so end users see
+the evidence behind every screen, not just the pixels.
 The design lives in `uxloom.project.json` (plain JSON, versioned in git).
 An Agent Skill (SKILL.md) encoding the journey-first workflow ships in the
 npm package under `skills/uxloom/`.

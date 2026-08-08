@@ -42,6 +42,19 @@ export const ExemptionSchema = z.object({
   reason: z.string().min(15, "an exemption reason must be a real sentence, not a token"),
 }).strict();
 
+/** Evidence behind a design decision — makes intelligence verifiable. */
+export const RationaleSchema = z.object({
+  decision: z.string().min(1),
+  reasoning: z.string().min(10, "a rationale is an argument, not a token"),
+  alternatives: z.array(z.object({
+    option: z.string().min(1),
+    pros: z.array(z.string().min(1)).min(1),
+    cons: z.array(z.string().min(1)).min(1),
+  }).strict()).optional(),
+  sources: z.array(z.string().min(1)).optional(),
+  confidence: z.enum(["low", "medium", "high"]).optional(),
+}).strict();
+
 export const BLOCK_TYPES = [
   "header", "nav", "hero", "text", "list", "card", "form", "field",
   "button", "image", "table", "footer", "custom",
@@ -82,6 +95,8 @@ export const ScreenSchema = z.object({
   layout: LayoutSchema.optional(),
   /** Named data shape this screen renders, field → type descriptor. */
   data: z.record(z.string().min(1)).optional(),
+  /** Evidence behind this screen's design decisions. */
+  rationale: RationaleSchema.optional(),
 }).strict();
 
 /** Rich transition: target plus optional guard condition and role scoping. */
@@ -109,6 +124,8 @@ export const JourneySchema = z.object({
   states: z.record(JourneyStateSchema),
   /** Scope a journey to a platform subset (divergent mobile/desktop flows). */
   platforms: z.array(PlatformIdSchema).min(1).optional(),
+  /** Evidence behind this flow's shape. */
+  rationale: RationaleSchema.optional(),
 }).strict();
 
 export const TokensSchema = z.object({
@@ -133,6 +150,8 @@ export const ProjectSchema = z.object({
   tokens: TokensSchema.optional(),
   /** Fragment globs (relative to the project file) merged at load time. */
   include: z.array(z.string().min(1)).optional(),
+  /** Evidence behind product-level decisions: IA, brand direction, patterns. */
+  rationale: RationaleSchema.optional(),
 }).strict();
 
 /** A fragment file: partial design merged into the base project at load. */

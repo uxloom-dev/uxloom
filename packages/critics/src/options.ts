@@ -10,12 +10,15 @@ export interface CriticOptions {
   expansionFactor?: number;
   /** Per-platform minimum touch-target px. */
   touchTargets?: Partial<Record<"web" | "mweb" | "ios" | "android", number>>;
+  /** Force rationale enforcement even before any rationale exists. */
+  requireRationale?: boolean;
 }
 
 export const DEFAULT_OPTIONS: Required<CriticOptions> = {
   contrastRatio: 4.5,
   expansionFactor: 1.4,
   touchTargets: { ios: 44, android: 48, mweb: 44, web: 24 },
+  requireRationale: false,
 };
 
 export function withDefaults(options?: CriticOptions): Required<CriticOptions> {
@@ -23,5 +26,6 @@ export function withDefaults(options?: CriticOptions): Required<CriticOptions> {
     contrastRatio: options?.contrastRatio ?? DEFAULT_OPTIONS.contrastRatio,
     expansionFactor: options?.expansionFactor ?? DEFAULT_OPTIONS.expansionFactor,
     touchTargets: { ...DEFAULT_OPTIONS.touchTargets, ...options?.touchTargets },
+    requireRationale: options?.requireRationale ?? DEFAULT_OPTIONS.requireRationale,
   };
 }
