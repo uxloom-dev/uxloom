@@ -27,9 +27,14 @@ with the `UXLOOM_PROJECT` environment variable.
 npx uxloom init           # set up any project: MCP config + skill + starter file
 npx uxloom check [file]   # design completeness; exit 1 on errors
 npx uxloom audit [file]   # implementation drift vs the contract; exit 1 on drift
-npx uxloom preview [file] # live wireframe mocks in the browser — every screen,
-                          # every state, every viewport, clickable journeys
+npx uxloom preview [file] # live mocks — themed by design tokens, every state,
+                          # clickable journeys, reviewer comment mode
+npx uxloom export [file]  # one self-contained shareable HTML file [--out path]
 ```
+
+`check`/`audit` flags: `--json`, `--sarif` (code scanning), `--github`
+(inline PR annotations), `--update-baseline` (freeze existing findings —
+brownfield adoption). Thresholds configurable via `uxloom.config.json`.
 
 Colored findings with concrete fixes. `check` gates design completeness;
 `audit` gates implementation fidelity via `data-ux-state` markers and an

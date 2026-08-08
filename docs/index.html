@@ -369,7 +369,7 @@
       UXLoom
     </a>
     <nav class="nav-links" aria-label="Primary">
-      <span class="pill">v0.5</span>
+      <span class="pill">v0.6</span>
       <a href="https://github.com/uxloom-dev/uxloom">GitHub</a>
       <a href="https://www.npmjs.com/package/uxloom">npm</a>
     </nav>
@@ -679,16 +679,20 @@
           design lands in <code>uxloom.project.json</code> — commit it.
         </li>
         <li>
-          <strong>Watch it live</strong> — <code>npx uxloom preview</code>
-          renders wireframe mocks of every screen while the agent designs:
-          every contracted state (loading skeletons, empty placeholders,
-          error banners) derived automatically, desktop/tablet/mobile frames,
-          and clickable journey events that walk the flows.
+          <strong>Watch it live, review it together</strong> —
+          <code>npx uxloom preview</code> renders mocks of every screen while
+          the agent designs: every contracted state derived automatically,
+          desktop/tablet/mobile frames, clickable journey events — themed by
+          your design tokens, with a comment mode where reviewers drop pins
+          that flow straight into the validation loop. Share with anyone via
+          <code>npx uxloom export</code> (one self-contained HTML file).
         </li>
         <li>
           <strong>Gate it forever</strong> — <code>npx uxloom check</code>
           (design completeness) and <code>npx uxloom audit</code>
-          (implementation drift) exit 1 on failure, in your terminal or in CI.
+          (implementation drift) exit 1 on failure, with
+          <code>--json</code>/<code>--sarif</code>/<code>--github</code>
+          outputs for CI and a baseline mode for adopting on existing apps.
         </li>
       </ol>
       <img class="start-gif" src="preview-demo.gif" width="1456" height="825"

@@ -31,7 +31,7 @@ await Promise.all([client.connect(ct), server.connect(st)]);
 const tools = (await client.listTools()).tools.map((t) => t.name).sort();
 await client.close();
 
-const KNOWN_CLI = ["init", "check", "audit", "preview"];
+const KNOWN_CLI = ["init", "check", "audit", "preview", "export"];
 const cliUsage = read("packages/mcp-server/src/cli.ts");
 const cliCommands = KNOWN_CLI.filter((c) => cliUsage.includes(`"${c}"`));
 
@@ -75,7 +75,7 @@ for (const f of skillFiles) {
 
 for (const doc of ["README.md", "QUICKSTART.md", "packages/mcp-server/README.md", "docs/llms.txt", "docs/index.html"]) {
   const text = read(doc);
-  for (const m of text.matchAll(/uxloom (init|check|audit|preview|[a-z]{3,})\b/g)) {
+  for (const m of text.matchAll(/uxloom (init|check|audit|preview|export|[a-z]{3,})\b/g)) {
     if (KNOWN_CLI.includes(m[1]) && !cliCommands.includes(m[1]))
       fail(doc, `documents "uxloom ${m[1]}" but the CLI does not implement it`, "add the command or fix the doc");
   }

@@ -21,6 +21,10 @@ honestly and iterate until the report is clean.
 3. **Zero errors is the exit condition.** Findings are not suggestions.
 4. **Answer the brief yourself first.** Only relay `askHuman: true` questions
    to the user; report the assumption ledger back in one short paragraph.
+5. **Reviewer comments are findings.** Open comments from the preview appear
+   in validation as `reviewer-comment` warnings: address the feedback in the
+   design, tell the user what changed, and let them resolve the pin in the
+   preview. Never treat designer feedback as optional.
 
 ## Workflow
 

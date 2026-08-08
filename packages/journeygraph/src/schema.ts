@@ -42,6 +42,12 @@ const BlockBase = z.object({
   label: z.string().optional(),
   /** Repeat count for list/card rows in the wireframe (default 3). */
   count: z.number().int().min(1).max(12).optional(),
+  /** Real column names for table blocks. */
+  columns: z.array(z.string().min(1)).optional(),
+  /** Real copy for text/hero blocks — content is design material. */
+  copy: z.string().optional(),
+  /** Named data binding this block renders (documents intent for codegen). */
+  source: z.string().optional(),
 });
 export const BlockSchema = BlockBase.extend({
   children: z.array(BlockBase.strict()).optional(),
@@ -60,12 +66,26 @@ export const ScreenSchema = z.object({
   platforms: z.array(PlatformIdSchema).optional(),
   exemptions: z.array(ExemptionSchema).optional(),
   layout: LayoutSchema.optional(),
+  /** Named data shape this screen renders, field → type descriptor. */
+  data: z.record(z.string().min(1)).optional(),
 }).strict();
+
+/** Rich transition: target plus optional guard condition and role scoping. */
+export const TransitionSchema = z.union([
+  z.string().regex(targetRefPattern),
+  z.object({
+    target: z.string().regex(targetRefPattern),
+    /** Human/agent-readable condition, e.g. "cart.total > 0". */
+    guard: z.string().min(1).optional(),
+    /** Roles this transition applies to, e.g. ["admin"]. */
+    roles: z.array(z.string().min(1)).min(1).optional(),
+  }).strict(),
+]);
 
 export const JourneyStateSchema = z.object({
   screen: z.string().min(1),
   final: z.boolean().optional(),
-  on: z.record(z.string().regex(targetRefPattern)).optional(),
+  on: z.record(TransitionSchema).optional(),
 }).strict();
 
 export const JourneySchema = z.object({
@@ -73,6 +93,20 @@ export const JourneySchema = z.object({
   goal: z.string().optional(),
   entry: z.string().min(1),
   states: z.record(JourneyStateSchema),
+  /** Scope a journey to a platform subset (divergent mobile/desktop flows). */
+  platforms: z.array(PlatformIdSchema).min(1).optional(),
+}).strict();
+
+export const TokensSchema = z.object({
+  colors: z.object({
+    accent: z.string().regex(hexColor).optional(),
+    bg: z.string().regex(hexColor).optional(),
+    surface: z.string().regex(hexColor).optional(),
+    text: z.string().regex(hexColor).optional(),
+    muted: z.string().regex(hexColor).optional(),
+  }).strict().optional(),
+  radius: z.number().min(0).max(32).optional(),
+  font: z.string().min(1).optional(),
 }).strict();
 
 export const ProjectSchema = z.object({
@@ -81,6 +115,16 @@ export const ProjectSchema = z.object({
   platforms: z.array(PlatformIdSchema).min(1),
   journeys: z.array(JourneySchema),
   screens: z.array(ScreenSchema),
+  /** Design tokens — the preview applies them; palette_check can verify them. */
+  tokens: TokensSchema.optional(),
+  /** Fragment globs (relative to the project file) merged at load time. */
+  include: z.array(z.string().min(1)).optional(),
+}).strict();
+
+/** A fragment file: partial design merged into the base project at load. */
+export const FragmentSchema = z.object({
+  journeys: z.array(JourneySchema).optional(),
+  screens: z.array(ScreenSchema).optional(),
 }).strict();
 
 export type ProjectInput = z.input<typeof ProjectSchema>;

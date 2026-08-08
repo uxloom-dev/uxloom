@@ -112,6 +112,48 @@ schema-enforced). `"error.any"` (any `error`-prefixed state) exempts the
 error family. An exemption for a state that is also in requiredStates is
 flagged as contradictory.
 
+## Rich transitions, tokens, content, and team-scale features (v0.6)
+
+**Guards and roles** — transitions accept an object form when a condition
+or role matters:
+
+```json
+"on": {
+  "DELETE": { "target": "confirm", "guard": "user.canDelete", "roles": ["admin"] },
+  "BACK": "list"
+}
+```
+
+**Platform-scoped journeys** — divergent mobile/desktop flows are separate
+journeys with `"platforms": ["mweb"]` on the journey.
+
+**Design tokens** — project-level `tokens` theme the preview and document
+the system: `{ "colors": { "accent": "#2F6B52", "bg": "#FAF9F6", "surface":
+"#FFFFFF", "text": "#2B2725", "muted": "#7A716B" }, "radius": 8, "font":
+"Iowan Old Style, serif" }`. Verify pairs with uxloom:palette_check.
+
+**Content-rich blocks** — table blocks take `columns: ["Recipient",
+"Status", "Sent"]`; text/hero blocks take `copy` (real copy, not lorem);
+any block takes `source` naming its data binding. Screens take `data`
+(`{ "messages": "Message[]", "filter": "StatusFilter" }`) so implementers
+know the shape.
+
+**Fragments (team scale)** — the base file may declare
+`"include": ["designs/*.json"]`; fragment files are `{ "journeys": [...],
+"screens": [...] }` merged at load. Duplicate ids across files are errors.
+MCP tools write to the base file; fragments are edited as files.
+
+**Config and baseline** — `uxloom.config.json` overrides thresholds
+(`{ "thresholds": { "contrastRatio": 7, "expansionFactor": 1.5,
+"touchTargets": { "web": 44 } } }`). `uxloom check --update-baseline`
+freezes existing findings into `uxloom.baseline.json` (brownfield
+adoption: block only new drift). Never baseline findings you can fix now.
+
+**Reviewer comments** — designers drop comments in the preview; open
+comments appear in validation as `reviewer-comment` warnings. Address the
+feedback, then resolve the comment in the preview. Never resolve without
+addressing.
+
 ## Validation rules the schema enforces
 
 - Unknown fields are rejected (strict schemas) — a typo fails loudly instead

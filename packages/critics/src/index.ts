@@ -11,17 +11,19 @@ export { wcagContrast, contrastRatio, relativeLuminance } from "./contrast.js";
 export { touchTargets } from "./touch-targets.js";
 export { textExpansion } from "./text-expansion.js";
 
-const ALL_CRITICS: Array<(project: Project) => Finding[]> = [
-  journeyCompleteness,
-  stateCoverage,
-  wcagContrast,
-  touchTargets,
-  textExpansion,
-];
+export { type CriticOptions, DEFAULT_OPTIONS } from "./options.js";
+import { withDefaults, type CriticOptions } from "./options.js";
 
 /** Run every critic and produce the full report. */
-export function critique(project: Project): Report {
-  const findings = ALL_CRITICS.flatMap((critic) => critic(project));
+export function critique(project: Project, options?: CriticOptions): Report {
+  const opts = withDefaults(options);
+  const findings = [
+    ...journeyCompleteness(project),
+    ...stateCoverage(project),
+    ...wcagContrast(project, opts.contrastRatio),
+    ...touchTargets(project, opts.touchTargets),
+    ...textExpansion(project, opts.expansionFactor),
+  ];
 
   let designed = 0;
   let required = 0;

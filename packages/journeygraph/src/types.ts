@@ -16,13 +16,22 @@ export type StateId = string;
  */
 export type TargetRef = string;
 
+/** Rich transition: target plus optional guard condition and role scoping. */
+export interface Transition {
+  target: TargetRef;
+  /** Human/agent-readable condition, e.g. "cart.total > 0". */
+  guard?: string;
+  /** Roles this transition applies to, e.g. ["admin"]. */
+  roles?: string[];
+}
+
 export interface JourneyState {
   /** Screen shown while the journey is in this state. */
   screen: string;
   /** Terminal state — the journey can legitimately end here. */
   final?: boolean;
-  /** Event name → target state ref. */
-  on?: Record<string, TargetRef>;
+  /** Event name → target state ref (string) or rich transition. */
+  on?: Record<string, TargetRef | Transition>;
 }
 
 export interface Journey {
@@ -32,6 +41,8 @@ export interface Journey {
   /** Entry state id. */
   entry: string;
   states: Record<string, JourneyState>;
+  /** Scope to a platform subset (divergent mobile/desktop flows). */
+  platforms?: PlatformId[];
 }
 
 export interface Label {
@@ -81,7 +92,20 @@ export interface Block {
   label?: string;
   /** Repeat count for list/card rows in the wireframe (default 3). */
   count?: number;
+  /** Real column names for table blocks. */
+  columns?: string[];
+  /** Real copy for text/hero blocks — content is design material. */
+  copy?: string;
+  /** Named data binding this block renders. */
+  source?: string;
   children?: Block[];
+}
+
+/** Design tokens — applied by the preview, verifiable by palette_check. */
+export interface Tokens {
+  colors?: { accent?: string; bg?: string; surface?: string; text?: string; muted?: string };
+  radius?: number;
+  font?: string;
 }
 
 export interface Screen {
@@ -99,6 +123,8 @@ export interface Screen {
   exemptions?: Exemption[];
   /** Ordered semantic blocks; when absent, the preview derives a default. */
   layout?: { blocks: Block[] };
+  /** Named data shape this screen renders, field → type descriptor. */
+  data?: Record<string, string>;
 }
 
 export interface Project {
@@ -108,6 +134,10 @@ export interface Project {
   platforms: PlatformId[];
   journeys: Journey[];
   screens: Screen[];
+  /** Design tokens — the preview applies them. */
+  tokens?: Tokens;
+  /** Fragment globs (relative to the project file) merged at load time. */
+  include?: string[];
 }
 
 /** A single issue reported by a critic. */

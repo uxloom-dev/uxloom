@@ -94,14 +94,31 @@ codex mcp add uxloom -- npx -y uxloom
 Same workflow. The skill ships in the npm package (`skills/uxloom/`) —
 copy it to `.agents/skills/` for best results.
 
+### Share it — stakeholders need a link, not npx
+
+```bash
+npx uxloom export         # writes uxloom-preview.html — email it, host it
+```
+
+### Designers: comment directly on the mocks
+
+In `npx uxloom preview`, toggle comment mode and click anywhere on a
+screen to leave feedback. Open comments appear in `uxloom check` as
+`reviewer-comment` warnings — your feedback enters the agent's fix loop,
+and you resolve it in the preview when it's addressed.
+
 ## Path C — CI gate (no agent involved)
 
 ```yaml
 # .github/workflows/design.yml
-- run: npx uxloom check uxloom.project.json
+- run: npx uxloom check uxloom.project.json --github
+- run: npx uxloom audit uxloom.project.json --github
 ```
 
-A design with validation errors can now never merge.
+Inline PR annotations via `--github`; `--sarif` for code scanning;
+`--json` for anything else. **Adopting on an existing app?** Run
+`npx uxloom check --update-baseline` once — existing findings are frozen
+as acknowledged debt and only new drift fails the build.
 
 ---
 

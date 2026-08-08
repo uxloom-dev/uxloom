@@ -23,30 +23,28 @@ export function contrastRatio(fg: string, bg: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-/** WCAG 2.2 AA for normal text. Large-text (3:1) can come later via a size hint. */
-const AA_NORMAL = 4.5;
-
 /**
- * Checks every component that declares both fg and bg against WCAG AA.
+ * Checks every component that declares both fg and bg against the minimum
+ * ratio (default WCAG 2.2 AA 4.5:1, configurable upward for stricter bars).
  * Declared-color checking is deliberate: it runs before any rendering
  * exists, on the design data itself.
  */
-export function wcagContrast(project: Project): Finding[] {
+export function wcagContrast(project: Project, minimumRatio = 4.5): Finding[] {
   const findings: Finding[] = [];
 
   for (const screen of project.screens) {
     for (const component of screen.components ?? []) {
       if (!component.fg || !component.bg) continue;
       const ratio = contrastRatio(component.fg, component.bg);
-      if (ratio < AA_NORMAL) {
+      if (ratio < minimumRatio) {
         findings.push({
           critic: CRITIC,
           code: "contrast-below-aa",
           severity: "error",
           screen: screen.id,
           component: component.id ?? component.semantic,
-          message: `"${component.semantic}" on screen "${screen.id}" has contrast ${ratio.toFixed(2)}:1 (${component.fg} on ${component.bg}) — below WCAG AA 4.5:1 for normal text.`,
-          fix: `Darken/lighten one side until the ratio reaches 4.5:1.`,
+          message: `"${component.semantic}" on screen "${screen.id}" has contrast ${ratio.toFixed(2)}:1 (${component.fg} on ${component.bg}) — below the ${minimumRatio}:1 minimum for normal text.`,
+          fix: `Darken/lighten one side until the ratio reaches ${minimumRatio}:1.`,
         });
       }
     }

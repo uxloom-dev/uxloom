@@ -1,5 +1,5 @@
 import type { Finding, Project } from "@uxloom/journeygraph";
-import { getScreen, splitTarget } from "@uxloom/journeygraph";
+import { getScreen, resolveTransition, splitTarget } from "@uxloom/journeygraph";
 
 const CRITIC = "journey-completeness";
 
@@ -48,7 +48,8 @@ export function journeyCompleteness(project: Project): Finding[] {
         });
       }
 
-      for (const [event, target] of Object.entries(state.on ?? {})) {
+      for (const [event, transition] of Object.entries(state.on ?? {})) {
+        const { target } = resolveTransition(transition);
         const { state: targetState, screenState } = splitTarget(target);
         const resolved = journey.states[targetState];
         if (!resolved) {
@@ -100,8 +101,8 @@ export function journeyCompleteness(project: Project): Finding[] {
       const current = queue.shift()!;
       const state = journey.states[current];
       if (!state) continue;
-      for (const target of Object.values(state.on ?? {})) {
-        const { state: next } = splitTarget(target);
+      for (const transition of Object.values(state.on ?? {})) {
+        const { state: next } = splitTarget(resolveTransition(transition).target);
         if (journey.states[next] && !reachable.has(next)) {
           reachable.add(next);
           queue.push(next);

@@ -38,7 +38,28 @@ npm package under `skills/uxloom/`.
 
 `npx uxloom check` (design completeness) and `npx uxloom audit`
 (implementation drift) both exit 1 on failure — wire them into CI so an
-incomplete design or drifted implementation can never merge.
+incomplete design or drifted implementation can never merge. Output
+formats: `--json`, `--sarif` (code scanning), `--github` (inline PR
+annotations). Brownfield adoption: `--update-baseline` freezes existing
+findings (uxloom.baseline.json) so only new drift blocks;
+uxloom.config.json tunes thresholds (contrast ratio, expansion factor,
+touch targets).
+
+## Sharing and feedback
+
+`npx uxloom export` produces one self-contained HTML file of the full
+design (themed when the project declares tokens) — shareable with anyone.
+In `npx uxloom preview`, reviewers drop comments directly on screens;
+open comments surface in validation as reviewer-comment warnings, so
+designer feedback enters the same loop agents iterate on.
+
+## Team-scale format features
+
+Design tokens (colors/radius/font) theme the preview. Transitions accept
+guards and roles; journeys can be platform-scoped for divergent flows.
+The base file can `include` fragment files so teams split the design;
+duplicate ids across files are errors. Screens carry data shapes; table
+blocks carry real columns; text blocks carry real copy.
 
 ## Live preview (wireframe mocks)
 

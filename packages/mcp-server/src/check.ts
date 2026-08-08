@@ -1,7 +1,17 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { parseProject, type Finding } from "@uxloom/journeygraph";
+import { relative, resolve } from "node:path";
+import { createRequire } from "node:module";
+import type { Finding } from "@uxloom/journeygraph";
 import { critique } from "@uxloom/critics";
+import {
+  applyBaseline,
+  commentFindings,
+  fingerprint,
+  loadWorkspace,
+  saveBaseline,
+} from "./workspace.js";
+import { parseFormatFlag, render, type ReportableFinding } from "./reporters.js";
+
+const { version: VERSION } = createRequire(import.meta.url)("../package.json") as { version: string };
 
 const useColor = process.stdout.isTTY && !process.env.NO_COLOR;
 const c = (code: string, s: string) => (useColor ? `\x1b[${code}m${s}\x1b[0m` : s);
@@ -20,39 +30,70 @@ function where(f: Finding): string {
   return "project";
 }
 
-/** `uxloom check [file]` — validate a JourneyGraph project, exit 1 on errors. */
-export function runCheck(fileArg?: string): never {
+/** `uxloom check [file] [--json|--sarif|--github] [--update-baseline]` */
+export function runCheck(fileArg?: string, flags: string[] = []): never {
   const path = resolve(fileArg ?? process.env.UXLOOM_PROJECT ?? "uxloom.project.json");
+  const format = parseFormatFlag(flags);
 
-  let raw: string;
+  let ws;
   try {
-    raw = readFileSync(path, "utf8");
-  } catch {
-    console.error(red(`✖ no project file at ${path}`));
-    console.error(dim("  pass a path: uxloom check ./uxloom.project.json"));
-    process.exit(2);
-  }
-
-  let project;
-  try {
-    project = parseProject(JSON.parse(raw));
+    ws = loadWorkspace(path);
   } catch (error) {
-    console.error(red(`✖ ${path} is not a valid JourneyGraph project`));
+    console.error(red(`✖ cannot load project at ${path}`));
     console.error(dim(String(error instanceof Error ? error.message : error)));
     process.exit(2);
   }
 
-  const report = critique(project);
-  const { errors, warnings, stateCoverage } = report.summary;
+  const report = critique(ws.project, ws.config.thresholds);
+  const all: Finding[] = [
+    ...ws.loadFindings,
+    ...report.findings,
+    ...commentFindings(ws.comments),
+  ];
 
-  console.log(bold(`\nuxloom check ${dim(path)}`));
+  if (flags.includes("--update-baseline")) {
+    ws.baseline.check = all.map(fingerprint);
+    saveBaseline(ws.baselinePath, ws.baseline);
+    console.log(`baseline updated: ${all.length} finding(s) frozen in ${relative(process.cwd(), ws.baselinePath)}`);
+    process.exit(0);
+  }
+
+  const { fresh, suppressed } = applyBaseline(all, ws.baseline.check);
+  const errors = fresh.filter((f) => f.severity === "error").length;
+  const warnings = fresh.filter((f) => f.severity === "warning").length;
+  const projectFile = relative(process.cwd(), ws.projectPath) || ws.projectPath;
+
+  if (format !== "human") {
+    const findings: ReportableFinding[] = fresh.map((f) => ({
+      code: f.code ?? f.critic,
+      severity: f.severity,
+      message: f.message,
+      fix: f.fix,
+      file: projectFile,
+      screen: f.screen,
+      state: f.state,
+      journey: f.journey,
+    }));
+    console.log(render(
+      {
+        tool: "uxloom", command: "check", version: VERSION,
+        summary: { errors, warnings, suppressed, screens: ws.project.screens.length, journeys: ws.project.journeys.length },
+        findings,
+      },
+      format,
+    ));
+    process.exit(errors > 0 ? 1 : 0);
+  }
+
+  console.log(bold(`\nuxloom check ${dim(ws.projectPath)}`));
   console.log(
-    `${project.journeys.length} journeys · ${project.screens.length} screens · platforms: ${project.platforms.join(", ")}\n`,
+    `${ws.project.journeys.length} journeys · ${ws.project.screens.length} screens · platforms: ${ws.project.platforms.join(", ")}` +
+    (ws.fragments.length ? ` · ${ws.fragments.length} fragment file(s) merged` : "") + "\n",
   );
 
-  for (const critic of [...new Set(report.findings.map((f) => f.critic))]) {
+  for (const critic of [...new Set(fresh.map((f) => f.critic))]) {
     console.log(bold(critic));
-    for (const f of report.findings.filter((x) => x.critic === critic)) {
+    for (const f of fresh.filter((x) => x.critic === critic)) {
       const mark = f.severity === "error" ? red("✖") : yellow("▲");
       console.log(`  ${mark} ${bold(where(f))}  ${f.message}`);
       if (f.fix) console.log(dim(`     fix → ${f.fix}`));
@@ -60,12 +101,12 @@ export function runCheck(fileArg?: string): never {
     console.log();
   }
 
+  const { stateCoverage } = report.summary;
   const pct = stateCoverage.required
     ? Math.round((100 * stateCoverage.designed) / stateCoverage.required)
     : 100;
-  console.log(
-    `state coverage: ${stateCoverage.designed}/${stateCoverage.required} required states designed (${pct}%)`,
-  );
+  console.log(`state coverage: ${stateCoverage.designed}/${stateCoverage.required} required states designed (${pct}%)`);
+  if (suppressed > 0) console.log(dim(`${suppressed} finding(s) suppressed by baseline`));
   if (errors === 0 && warnings === 0) {
     console.log(green("✔ no findings — every journey complete, every contract met\n"));
   } else {

@@ -7,10 +7,13 @@ export {
   LabelSchema,
   PlatformIdSchema,
   ExemptionSchema,
+  TransitionSchema,
+  TokensSchema,
+  FragmentSchema,
 } from "./schema.js";
 
 import { ProjectSchema } from "./schema.js";
-import type { Project, Journey, Screen, TargetRef } from "./types.js";
+import type { Project, Journey, Screen, TargetRef, Transition } from "./types.js";
 
 /** Parse + validate an unknown value as a Project. Throws ZodError. */
 export function parseProject(input: unknown): Project {
@@ -23,6 +26,11 @@ export function splitTarget(ref: TargetRef): { state: string; screenState?: stri
   return i === -1
     ? { state: ref }
     : { state: ref.slice(0, i), screenState: ref.slice(i + 1) };
+}
+
+/** Normalize a transition (string shorthand or rich object) to object form. */
+export function resolveTransition(t: TargetRef | Transition): Transition {
+  return typeof t === "string" ? { target: t } : t;
 }
 
 export function getScreen(project: Project, id: string): Screen | undefined {

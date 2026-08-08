@@ -15,6 +15,7 @@ import { createRequire } from "node:module";
 import { ProjectStore } from "./store.js";
 import { briefQuestions, compileBrief } from "./brief.js";
 import { loadMap, runAudit } from "./audit.js";
+import { commentFindings, loadWorkspace } from "./workspace.js";
 
 // Version is DERIVED from package.json — never hardcode it here again.
 // (Hand-bumped strings drifted three releases in a row before this.)
@@ -188,11 +189,23 @@ export function createServer(store = new ProjectStore()): McpServer {
 
   server.tool(
     "project_validate",
-    "Run every critic: journey completeness (unreachable states, dead ends, broken transitions), state coverage, WCAG contrast, touch targets, text expansion. Returns all findings with fixes. Iterate until errors = 0.",
+    "Run every critic: journey completeness (unreachable states, dead ends, broken transitions), state coverage, WCAG contrast, touch targets, text expansion — plus fragment-merge errors and open reviewer comments from the preview. Honors uxloom.config.json thresholds. Iterate until errors = 0 and reviewer comments are addressed.",
     {},
     async () => {
-      const project = store.load();
-      return json(critique(project));
+      const ws = loadWorkspace(store.path);
+      const report = critique(ws.project, ws.config.thresholds);
+      const extra = [...ws.loadFindings, ...commentFindings(ws.comments)];
+      return json({
+        ...report,
+        findings: [...extra, ...report.findings],
+        summary: {
+          ...report.summary,
+          errors: report.summary.errors + extra.filter((f) => f.severity === "error").length,
+          warnings: report.summary.warnings + extra.filter((f) => f.severity === "warning").length,
+          openReviewerComments: ws.comments.filter((c) => !c.resolved).length,
+          fragments: ws.fragments.length,
+        },
+      });
     },
   );
 

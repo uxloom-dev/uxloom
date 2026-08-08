@@ -20,6 +20,7 @@
 import { readdirSync, readFileSync, statSync, existsSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import type { Project, Screen } from "@uxloom/journeygraph";
+import { analyzeMarkerQuality } from "./audit-tier3.js";
 
 export interface Evidence {
   tier: 1 | 2;
@@ -38,10 +39,14 @@ export interface StateVerdict {
 }
 
 export interface AuditFinding {
-  code: "screen-unmapped" | "state-unimplemented" | "state-unproven";
+  code:
+    | "screen-unmapped" | "state-unimplemented" | "state-unproven"
+    | "state-marker-thin" | "state-marker-duplicate" | "state-marker-static";
   severity: "error" | "warning";
-  screen: string;
+  screen?: string;
   state?: string;
+  file?: string;
+  line?: number;
   message: string;
   fix: string;
 }
@@ -183,6 +188,13 @@ export function runAudit(
   const findings: AuditFinding[] = [];
   const unmappedScreens: string[] = [];
   let markerScreens = 0;
+
+  // Tier 2.5 — marker-quality heuristics (anti-washing): challenge
+  // suspicious markers; never grant or upgrade a verdict.
+  const markerFiles = ctx.files
+    .filter((f) => read(ctx, f).includes("data-ux-"))
+    .map((f) => ({ path: f, text: read(ctx, f) }));
+  findings.push(...analyzeMarkerQuality(markerFiles));
 
   for (const screen of project.screens) {
     const screenEvidence = evidence.filter((e) => e.screen === screen.id);

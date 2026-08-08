@@ -5,6 +5,7 @@
 - The marker convention (how to make code self-auditing)
 - The registry (uxloom.map.json)
 - Verdicts and finding codes
+- Marker quality (anti-washing)
 - Workflow for agents
 
 ## What the audit proves
@@ -55,6 +56,28 @@ registry paths is an error — it has no implementation at all.
 | `screen-unmapped` | error | no files at all for a contracted screen |
 | `state-unimplemented` | error | screen uses markers, this state has none |
 | `state-unproven` | warning | files exist but carry no markers — nothing verifiable |
+
+## Marker quality (anti-washing)
+
+A marker on an empty element proves nothing — "marker washing" is pasting
+`data-ux-state` attributes to turn verdicts green without implementing the
+states. Tier 2.5 runs static marker-quality heuristics that challenge
+suspicious markers. **Heuristics challenge evidence, they never grant it**:
+every check emits a warning with file:line evidence and never upgrades a
+verdict. They are conservative — when the source is ambiguous they stay
+silent.
+
+| Code | Severity | Triggered when |
+|---|---|---|
+| `state-marker-thin` | warning | the marker sits on a bare element that renders nothing: self-closing (`<div data-ux-state="empty" />`) or closing immediately with only whitespace inside, with no other props (no className, no children, no bindings) |
+| `state-marker-duplicate` | warning | one element carries several `data-ux-state` attributes, or two different states are marked on textually identical bare elements in the same file — one element cannot render two distinct states distinctly; each state is flagged once |
+| `state-marker-static` | warning | a conditional-by-nature state (`loading`, `empty`, or any `error*`) has no conditional-rendering signal (`&&`, ternary, `if`, `switch`, `v-if`, `*ngIf`, `{#if`, `.map(`, optional chaining) on its line or the 3 lines above — the state is likely always- or never-rendered. Not applied to `default` or custom states, and suppressed inside components named after the state (e.g. `function LoadingSkeleton`), where the conditional lives at the call site |
+
+Fixing the warnings is always the same move: render the real state UI
+inside (or as) the marked element, gated by the condition that actually
+produces the state — never relocate the marker to silence the check.
+Static heuristics narrow washing; they cannot eliminate it — fixture and
+browser tiers (4–5) remain future work.
 
 ## Workflow for agents
 
