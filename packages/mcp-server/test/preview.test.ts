@@ -333,3 +333,27 @@ describe("static export with include fragments", () => {
     expect(html).toContain("meridian"); // merged once, no self-duplication blowup
   });
 });
+
+describe("mobile & tablet viewports render as devices", () => {
+  it("ships the phone bezel + dynamic island", () => {
+    // A rounded dark bezel so the mobile viewport reads as a device, not a narrow browser.
+    expect(PREVIEW_TEMPLATE).toMatch(/\.frame\.mobile\s*\{[^}]*border-radius:\s*52px/);
+    expect(PREVIEW_TEMPLATE).toContain(".frame.mobile .island");
+    expect(PREVIEW_TEMPLATE).toContain(".frame.mobile .home-ind");
+  });
+
+  it("ships the tablet bezel + camera dot", () => {
+    expect(PREVIEW_TEMPLATE).toMatch(/\.frame\.tablet\s*\{[^}]*border-radius:\s*34px/);
+    expect(PREVIEW_TEMPLATE).toContain(".frame.tablet .cam");
+    expect(PREVIEW_TEMPLATE).toContain(".frame.tablet .home-ind");
+  });
+
+  it("builds an iOS-style status bar + home indicator for both device viewports", () => {
+    expect(PREVIEW_TEMPLATE).toContain('h("span", "st-time", "9:41")');
+    expect(PREVIEW_TEMPLATE).toContain('vp === "mobile" ? "island" : "cam"');
+    expect(PREVIEW_TEMPLATE).toContain('h("div", "home-ind")');
+    // both mobile and tablet get the status bar and home indicator
+    expect(PREVIEW_TEMPLATE).toContain('vp === "mobile" || vp === "tablet"');
+    expect(PREVIEW_TEMPLATE).toContain('viewport === "mobile" || viewport === "tablet"');
+  });
+});

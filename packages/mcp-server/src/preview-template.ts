@@ -70,13 +70,44 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
   .stage.commenting .screen { cursor: crosshair; }
   .frame { background: #fff; border: 1px solid var(--line); border-radius: 12px;
            box-shadow: 0 8px 30px rgba(0,0,0,.08); overflow: hidden; flex-shrink: 0; }
-  .frame.desktop { width: 960px; } .frame.tablet { width: 640px; } .frame.mobile { width: 390px; }
+  .frame.desktop { width: 960px; } .frame.tablet { width: 640px; }
   .chrome { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #eef0ee;
             border-bottom: 1px solid var(--line); font-size: 11px; color: var(--dim); }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: #cfd3cf; }
   .chrome .url { flex: 1; background: #fff; border: 1px solid var(--line); border-radius: 6px;
                  padding: 2px 10px; text-align: center; }
   .notch { flex: 1; text-align: center; }
+
+  /* mobile & tablet: render as an actual device so the viewport reads as one at a glance */
+  .frame.mobile, .frame.tablet { border: 14px solid #0c0c0e; background: #0c0c0e;
+                  box-shadow: 0 26px 64px rgba(0,0,0,.30); position: relative; }
+  .frame.mobile { width: 372px; border-radius: 52px; }
+  .frame.tablet { width: 720px; border-width: 16px; border-radius: 34px; }
+  .frame.mobile .chrome, .frame.tablet .chrome { background: var(--mock-bg, #fff);
+                          color: var(--mock-text, var(--ink)); border-bottom: none;
+                          justify-content: space-between; padding: 12px 24px 5px;
+                          font-weight: 600; font-size: 12px; }
+  .frame.mobile .screen { min-height: 560px; }
+  .frame.tablet .screen { min-height: 500px; }
+  /* phone dynamic island vs tablet camera dot */
+  .frame.mobile .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+                          width: 108px; height: 26px; background: #000; border-radius: 14px; z-index: 4;
+                          box-shadow: 0 0 0 1px rgba(128,128,128,.25); }
+  .frame.tablet .cam { position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+                       width: 7px; height: 7px; border-radius: 50%; background: #23232a; z-index: 4;
+                       box-shadow: 0 0 0 2px rgba(255,255,255,.06); }
+  .st-right { display: inline-flex; align-items: center; gap: 7px; }
+  .batt { display: inline-block; width: 22px; height: 11px; border: 1.5px solid currentColor;
+          border-radius: 3px; position: relative; opacity: .9; }
+  .batt::after { content: ""; position: absolute; right: -3px; top: 3px; width: 2px; height: 5px;
+                 background: currentColor; border-radius: 0 1px 1px 0; }
+  .batt::before { content: ""; position: absolute; left: 1.5px; top: 1.5px; bottom: 1.5px;
+                  width: 68%; background: currentColor; border-radius: 1px; }
+  .frame.mobile .home-ind, .frame.tablet .home-ind { background: var(--mock-bg, #fff);
+                            color: var(--mock-text, var(--ink)); display: flex;
+                            justify-content: center; align-items: center; height: 24px; }
+  .frame.mobile .home-ind i { width: 128px; height: 5px; border-radius: 3px; background: currentColor; opacity: .32; }
+  .frame.tablet .home-ind i { width: 180px; height: 5px; border-radius: 3px; background: currentColor; opacity: .3; }
   .screen { position: relative; padding: 14px; min-height: 420px; display: flex;
             flex-direction: column; gap: 10px;
             background: var(--mock-bg, transparent);
@@ -624,10 +655,17 @@ function placePin(e, body, screen) {
 function chromeFor(vp) {
   var c = h("div", "chrome");
   var native = (data.platforms || []).some(function (p) { return p === "ios" || p === "android"; });
-  if (vp === "mobile" && native && (data.platforms || []).indexOf("web") < 0 && (data.platforms || []).indexOf("mweb") < 0) {
-    c.appendChild(h("span", "notch", "9:41 \\u2014 " + data.platforms.join(" / ")));
-  } else if (vp === "mobile") {
-    c.appendChild(h("span", "notch", "9:41 \\u2014 mobile web"));
+  if (vp === "mobile" || vp === "tablet") {
+    // iOS-style status bar over a device bezel (see .frame.mobile/.tablet):
+    // time, a phone dynamic-island pill or tablet camera dot, and signal +
+    // battery. The device frame itself tells the reviewer which viewport this
+    // is — no textual label needed.
+    c.appendChild(h("span", "st-time", "9:41"));
+    c.appendChild(h("div", vp === "mobile" ? "island" : "cam"));
+    var right = h("span", "st-right");
+    right.appendChild(h("span", "st-sig", native ? data.platforms.join(" / ") : (vp === "tablet" ? "Wi-Fi" : "5G")));
+    right.appendChild(h("span", "batt"));
+    c.appendChild(right);
   } else {
     c.appendChild(h("span", "dot")); c.appendChild(h("span", "dot")); c.appendChild(h("span", "dot"));
     c.appendChild(h("span", "url", (data.name || "app") + ".example.com"));
@@ -844,6 +882,7 @@ function render() {
     var body = renderScreenBody(screen, sel.state);
     if (!STATIC_INFO) attachComments(body, screen);
     frame.appendChild(body);
+    if (viewport === "mobile" || viewport === "tablet") { var hi = h("div", "home-ind"); hi.appendChild(h("i")); frame.appendChild(hi); }
     stage.appendChild(frame);
   }
 
