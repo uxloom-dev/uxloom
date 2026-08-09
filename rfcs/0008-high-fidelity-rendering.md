@@ -1,6 +1,6 @@
 # RFC 0008 — High-fidelity rendering: no Figma for product UI
 
-**Status:** Shipped R30, R31 (preview), R34 (export parity), R32 (tokens + light/dark), R33 (component variants + states); R35/R36 open · **Source:** owner requirement 2026-08-09
+**Status:** Shipped R30, R31, R34, R32, R33, R35 (bundled icons + imagery); R36 (density/type-scale) open · **Source:** owner requirement 2026-08-09
 
 ## Problem
 

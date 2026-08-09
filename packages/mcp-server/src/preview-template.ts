@@ -162,7 +162,14 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
   .b-text .ln:last-child { width: 60%; }
   .b-image { min-height: 130px; border: 1px solid var(--hair);
     background: linear-gradient(135deg, var(--accent-soft), var(--sunken));
-    display: flex; align-items: center; justify-content: center; }
+    display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center;
+    color: var(--mock-muted, var(--dim)); }
+  /* R35 — bundled icons */
+  .ico { display: inline-flex; align-items: center; justify-content: center; }
+  .ico svg { display: block; width: 16px; height: 16px; }
+  .cardhd .ic { display: flex; align-items: center; justify-content: center; color: var(--mock-accent, var(--ink)); }
+  .cardhd .ic svg { width: 15px; height: 15px; }
+  .b-image .ico svg { width: 42px; height: 42px; opacity: .75; }
 
   /* buttons */
   .b-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -552,6 +559,33 @@ function cellFor(col, i) {
   return pick(["Acme Corp", "North Star", "Blue Ridge", "Vertex Labs", "Harbor", "Summit Co"], i);
 }
 
+/* R35 — bundled icon set (identical markup to the SVG exporter). */
+var ICONS = {
+  flag: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
+  chart: '<line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="11" width="3" height="7"/><rect x="11" y="7" width="3" height="11"/><rect x="16" y="14" width="3" height="4"/>',
+  search: '<circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/>',
+  grid: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  doc: '<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/><line x1="10" y1="13" x2="15" y2="13"/><line x1="10" y1="17" x2="15" y2="17"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M4 18l5-5 4 4 3-3 4 4"/>'
+};
+function cardIcon(title) {
+  var t = (title || "").toLowerCase();
+  if (hasWord(t, ["flow", "onboard"])) return "flag";
+  if (hasWord(t, ["payment", "billing", "revenue", "chart", "analytic"])) return "chart";
+  if (hasWord(t, ["search", "index"])) return "search";
+  if (hasWord(t, ["mobile", "nav", "board", "kanban"])) return "grid";
+  if (hasWord(t, ["api", "export", "doc", "file"])) return "doc";
+  if (hasWord(t, ["auth", "user", "member", "account"])) return "user";
+  return "folder";
+}
+function svgIcon(name) {
+  var s = h("span", "ico");
+  s.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || ICONS.folder) + '</svg>';
+  return s;
+}
+
 function renderBlock(b, screen) {
   var el, i, j, n = b.count || 3;
   switch (b.type) {
@@ -572,7 +606,7 @@ function renderBlock(b, screen) {
       el = h("div", "cards");
       for (i = 0; i < (b.count || 3); i++) {
         var c = h("div", "b");
-        var chd = h("div", "cardhd"); chd.appendChild(h("div", "ic")); chd.appendChild(h("div", "ttl", pick(ITEM_TITLES, i)));
+        var chd = h("div", "cardhd"); var chic = h("div", "ic"); chic.appendChild(svgIcon(cardIcon(pick(ITEM_TITLES, i)))); chd.appendChild(chic); chd.appendChild(h("div", "ttl", pick(ITEM_TITLES, i)));
         c.appendChild(chd);
         c.appendChild(h("div", "sub", pick(CARD_SUBS, i)));
         var ft = h("div", "foot"); ft.appendChild(statusBadge(i)); ft.appendChild(h("span", "meta", pick(CARD_METAS, i)));
@@ -615,7 +649,7 @@ function renderBlock(b, screen) {
       if (b.copy) el.appendChild(h("div", "copy", b.copy));
       else { el.appendChild(h("div", "ln")); el.appendChild(h("div", "ln")); }
       break;
-    case "image": el = h("div", "b b-image"); el.appendChild(h("span", "meta", b.label || "Image")); break;
+    case "image": el = h("div", "b b-image"); el.appendChild(svgIcon("image")); el.appendChild(h("span", "meta", b.label || "Image")); break;
     case "hero":
       el = h("div", "b b-hero");
       el.appendChild(h("div", "h1", b.copy || b.label || "Build something great"));

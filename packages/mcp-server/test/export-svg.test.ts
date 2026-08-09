@@ -239,3 +239,23 @@ describe("component variants (R33)", () => {
     expect(svg).not.toContain("#abcdef");
   });
 });
+
+describe("bundled icons (R35)", () => {
+  const one = (block: object): SvgProject => ({
+    name: "x", platforms: ["web"],
+    screens: [{ id: "S", requiredStates: ["default"], layout: { blocks: [block] } }],
+  });
+
+  it("puts a scaled icon group in card chips", () => {
+    const svg = buildScreenSvg(one({ type: "card", count: 2 }), "S", "default");
+    expect(svg).toContain('<g transform="translate');
+    expectWellFormed(svg);
+  });
+
+  it("renders an image glyph plus a caption, not a flat box", () => {
+    const svg = buildScreenSvg(one({ type: "image", label: "Cover" }), "S", "default");
+    expect(svg).toContain('<g transform="translate'); // the photo glyph
+    expect(svg).toContain("Cover");
+    expectWellFormed(svg);
+  });
+});
