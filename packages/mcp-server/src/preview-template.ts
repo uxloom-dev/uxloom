@@ -108,53 +108,121 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
                             justify-content: center; align-items: center; height: 24px; }
   .frame.mobile .home-ind i { width: 128px; height: 5px; border-radius: 3px; background: currentColor; opacity: .32; }
   .frame.tablet .home-ind i { width: 180px; height: 5px; border-radius: 3px; background: currentColor; opacity: .3; }
-  .screen { position: relative; padding: 14px; min-height: 420px; display: flex;
-            flex-direction: column; gap: 10px;
+  .screen { position: relative; padding: 18px; min-height: 420px; display: flex;
+            flex-direction: column; gap: 14px;
             background: var(--mock-bg, transparent);
             color: var(--mock-text, var(--ink));
-            font-family: var(--mock-font, inherit); }
+            font-family: var(--mock-font, inherit);
+            /* R30 design-system tokens, derived from the project's colors so a
+               theme change restyles everything; theme-adaptive on light & dark */
+            --hair: color-mix(in srgb, var(--mock-text, #2a2e2a) 13%, transparent);
+            --surf: var(--block, #ffffff);
+            --sunken: color-mix(in srgb, var(--mock-text, #2a2e2a) 6%, var(--mock-bg, #ffffff));
+            --accent-soft: color-mix(in srgb, var(--mock-accent, #2a2e2a) 15%, transparent);
+            --elev-1: 0 1px 2px rgba(0,0,0,.05), 0 1px 3px rgba(0,0,0,.08);
+            --elev-2: 0 6px 20px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.07); }
 
   /* wireframe blocks — themed via --mock-* custom properties when the
      project declares tokens; grayscale defaults otherwise */
-  .b { border: 1.5px solid var(--blockline); border-radius: var(--mock-radius, 8px);
-       background: var(--block); padding: 10px 12px; position: relative; }
-  .b .lab { font-size: 12px; color: var(--mock-muted, var(--dim)); }
-  .b-header, .b-nav, .b-footer { background: #f1f3f1; display: flex; gap: 10px; align-items: center; }
-  .b-nav .pill, .b-header .pill { width: 54px; height: 8px; border-radius: 4px; background: var(--blockline); }
-  .b-hero { min-height: 90px; display: flex; align-items: center; justify-content: center; }
-  .b-hero .copy { font-size: 17px; font-weight: 600; text-align: center; }
-  .b-text .ln { height: 8px; border-radius: 4px; background: #e0e3e0; margin: 7px 0; }
+  .b { border: 1px solid var(--hair); border-radius: var(--mock-radius, 10px);
+       background: var(--surf); padding: 14px 16px; position: relative; box-shadow: var(--elev-1); }
+  .b .lab { font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase;
+            color: var(--mock-muted, var(--dim)); margin-bottom: 8px; }
+  .ttl { font-size: 14px; font-weight: 650; line-height: 1.3; color: var(--mock-text, var(--ink)); }
+  .sub { font-size: 12.5px; line-height: 1.4; color: var(--mock-muted, var(--dim)); }
+  .meta { font-size: 12px; color: var(--mock-muted, var(--dim)); font-variant-numeric: tabular-nums; }
+
+  /* app bar / nav / footer */
+  .b-header { display: flex; align-items: center; gap: 14px; padding: 12px 16px; box-shadow: var(--elev-1); }
+  .b-header .brand { font-weight: 700; font-size: 15px; color: var(--mock-text, var(--ink)); }
+  .b-header .grow { flex: 1; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; display: flex;
+            align-items: center; justify-content: center; font-size: 11px; font-weight: 700;
+            color: #fff; background: var(--mock-accent, #888); }
+  .b-nav { display: flex; gap: 4px; padding: 5px; background: var(--sunken); box-shadow: none; }
+  .b-nav .tab { font-size: 13px; padding: 7px 13px; border-radius: 7px; color: var(--mock-muted, var(--dim)); }
+  .b-nav .tab.on { background: var(--surf); color: var(--mock-text, var(--ink)); font-weight: 600;
+                   box-shadow: var(--elev-1); }
+  .b-footer { display: flex; gap: 16px; align-items: center; justify-content: center; padding: 12px 16px;
+              font-size: 12px; color: var(--mock-muted, var(--dim)); box-shadow: none; }
+
+  /* hero */
+  .b-hero { padding: 30px 24px; text-align: center;
+            background: linear-gradient(160deg, var(--accent-soft), transparent 68%), var(--surf); }
+  .b-hero .h1 { font-size: 23px; font-weight: 750; letter-spacing: -.01em; line-height: 1.2;
+                color: var(--mock-text, var(--ink)); }
+  .b-hero .sub { margin-top: 8px; font-size: 13.5px; }
+  .b-hero .cta { margin-top: 18px; display: flex; gap: 10px; justify-content: center; }
+
+  .copy { font-size: 13.5px; line-height: 1.55; white-space: pre-wrap; color: var(--mock-text, var(--ink)); }
+  .b-text .ln { height: 9px; border-radius: 5px; background: var(--hair); margin: 8px 0; }
   .b-text .ln:last-child { width: 60%; }
-  .copy { font-size: 13px; white-space: pre-wrap; }
-  .b-image { min-height: 80px;
-    background: repeating-linear-gradient(45deg, #f4f5f4, #f4f5f4 8px, #e8eae8 8px, #e8eae8 9px);
+  .b-image { min-height: 130px; border: 1px solid var(--hair);
+    background: linear-gradient(135deg, var(--accent-soft), var(--sunken));
     display: flex; align-items: center; justify-content: center; }
-  .b-button { display: inline-block; background: var(--mock-accent, var(--ink)); color: #fff;
-              border-radius: var(--mock-radius, 8px);
-              padding: 9px 18px; font-size: 13px; align-self: flex-start; border: none; }
-  .b-field { background: var(--block); } .b-field .inp { height: 30px; border: 1.5px solid var(--blockline);
-              border-radius: 6px; margin-top: 5px; background: #fdfdfd; }
-  .row { display: flex; gap: 10px; align-items: center; border: 1.5px solid var(--blockline);
-         border-radius: var(--mock-radius, 8px); padding: 9px 12px; background: var(--block); }
-  .row .av { width: 26px; height: 26px; border-radius: 50%; background: #e0e3e0; flex-shrink: 0; }
-  .row .ln { height: 8px; border-radius: 4px; background: #e0e3e0; flex: 1; }
-  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-  .tbl { border: 1.5px solid var(--blockline); border-radius: var(--mock-radius, 8px);
-         overflow: hidden; background: var(--block); }
-  .tbl .tr { display: flex; border-top: 1px solid #e4e7e4; }
-  .tbl .tr:first-child { border-top: none; background: #f1f3f1; }
-  .tbl .td { flex: 1; padding: 8px; } .tbl .td .ln { height: 8px; border-radius: 4px; background: #e0e3e0; }
-  .tbl .td.hd { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em;
+
+  /* buttons */
+  .b-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+              background: var(--mock-accent, var(--ink)); color: #fff; font-weight: 600;
+              border-radius: calc(var(--mock-radius, 10px) - 2px); padding: 10px 18px; font-size: 13px;
+              align-self: flex-start; border: none; box-shadow: var(--elev-1); }
+  .b-button.ghost { background: transparent; color: var(--mock-text, var(--ink));
+                    border: 1px solid var(--hair); box-shadow: none; }
+
+  /* fields */
+  .b-field { background: transparent; border: none; box-shadow: none; padding: 0; }
+  .b-field .lab { text-transform: none; letter-spacing: 0; font-size: 12.5px; font-weight: 600;
+                  color: var(--mock-text, var(--ink)); margin-bottom: 6px; }
+  .b-field .inp { display: flex; align-items: center; height: 40px; padding: 0 13px; font-size: 13px;
+                  border: 1px solid var(--hair); border-radius: calc(var(--mock-radius, 10px) - 2px);
+                  background: var(--sunken); color: var(--mock-muted, var(--dim)); }
+
+  /* list rows */
+  .row { display: flex; gap: 12px; align-items: center; border: 1px solid var(--hair);
+         border-radius: var(--mock-radius, 10px); padding: 12px 14px; background: var(--surf);
+         box-shadow: var(--elev-1); }
+  .row .av { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex;
+             align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+             color: #fff; background: var(--mock-accent, #888); }
+  .row .rc { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .row .chev { color: var(--mock-muted, var(--dim)); opacity: .5; font-size: 17px; }
+
+  /* cards */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+  .cards .b { display: flex; flex-direction: column; gap: 8px; min-height: 118px; }
+  .cardhd { display: flex; align-items: center; gap: 9px; }
+  .cardhd .ic { width: 26px; height: 26px; border-radius: 7px; background: var(--accent-soft); flex-shrink: 0; }
+  .foot { margin-top: auto; display: flex; gap: 8px; align-items: center; padding-top: 6px; }
+
+  /* table */
+  .tbl { border: 1px solid var(--hair); border-radius: var(--mock-radius, 10px);
+         overflow: hidden; background: var(--surf); box-shadow: var(--elev-1); }
+  .tbl .tr { display: flex; border-top: 1px solid var(--hair); }
+  .tbl .tr:first-child { border-top: none; background: var(--sunken); }
+  .tbl .tr.bd:nth-child(even) { background: color-mix(in srgb, var(--mock-text, #000) 3%, transparent); }
+  .tbl .td { flex: 1; padding: 10px 12px; font-size: 13px; color: var(--mock-text, var(--ink));
+             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tbl .td .ln { height: 9px; border-radius: 5px; background: var(--hair); }
+  .tbl .td.hd { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
                 color: var(--mock-muted, var(--dim)); }
+
+  /* status pill */
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600;
+           padding: 3px 9px; border-radius: 999px; background: var(--accent-soft);
+           color: var(--mock-accent, var(--ink)); }
+  .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
   .srcchip { display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-             font-size: 10px; color: var(--mock-muted, var(--dim)); border: 1px solid var(--blockline);
-             border-radius: 4px; padding: 0 5px; margin-top: 5px; align-self: flex-start; }
+             font-size: 10px; color: var(--mock-muted, var(--dim)); border: 1px solid var(--hair);
+             border-radius: 4px; padding: 0 5px; margin-top: 8px; align-self: flex-start; }
   .srcchip + .srcchip { margin-left: 4px; }
-  .kids { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .kids { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 
   /* state treatments */
   .skel .b, .skel .row, .skel .tbl { border-color: #e4e7e4; }
-  .skel .ln, .skel .pill, .skel .av, .skel .inp, .skel .b-image, .skel .b-button, .skel .copy {
+  .skel .ln, .skel .pill, .skel .av, .skel .avatar, .skel .inp, .skel .b-image, .skel .b-button,
+  .skel .copy, .skel .ttl, .skel .sub, .skel .meta, .skel .badge, .skel .h1, .skel .td,
+  .skel .brand, .skel .ic, .skel .tab, .skel .chev {
     background: linear-gradient(90deg, #ececec 25%, #f7f7f7 50%, #ececec 75%);
     background-size: 200% 100%; animation: shimmer 1.4s infinite; color: transparent; border-color: transparent; }
   @keyframes shimmer { to { background-position: -200% 0; } }
@@ -418,46 +486,125 @@ function appendMetaChips(el, b, screen) {
   if (meta.motion === "decorative") el.appendChild(metaChip("motion: decorative"));
 }
 
+/* R31 — deterministic sample content for high-fidelity mocks. Pure functions
+   of (block, index, column): no randomness, so mocks stay byte-stable. This
+   is legible mock filler (the role gray bars used to play), never invented
+   product copy or design decisions. */
+var SAMPLE_NAMES = ["Alex Rivera", "Sam Chen", "Jordan Lee", "Taylor Kim", "Morgan Diaz", "Casey Park", "Riley Fox", "Jamie Wu"];
+var ITEM_TITLES = ["Onboarding flow", "Payment retry logic", "Search indexing", "Mobile navigation", "Export API", "Billing settings", "Auth token refresh", "Dark mode polish"];
+var SAMPLE_SUBS = ["Updated 2h ago", "In review", "Due Friday", "3 comments", "Blocked on API", "Ready to ship"];
+var CARD_SUBS = ["Cross-team initiative with three active workstreams.", "On track for the Q3 milestone.", "Waiting on design sign-off.", "Recently reopened after QA."];
+var CARD_METAS = ["12 tasks", "3 members", "Due Aug 30", "8 open"];
+var STATUS_WORDS = ["Active", "In review", "Done", "Pending", "Blocked"];
+function pick(a, i) { return a[((i % a.length) + a.length) % a.length]; }
+function initials(s) { s = (s || "").trim(); if (!s) return "U"; var p = s.split(" "); return (p[0].charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : "")).toUpperCase(); }
+function statusBadge(i) { return h("span", "badge", pick(STATUS_WORDS, i)); }
+function hasWord(c, list) { for (var k = 0; k < list.length; k++) if (c.indexOf(list[k]) >= 0) return true; return false; }
+function isGhost(l) { return hasWord((l || "").toLowerCase(), ["cancel", "back", "skip", "learn", "secondary", "dismiss", "later"]); }
+function placeholderFor(l) { l = (l || "").toLowerCase(); if (l.indexOf("email") >= 0) return "you@company.com"; if (l.indexOf("password") >= 0) return "••••••••••"; if (l.indexOf("search") >= 0) return "Search…"; if (l.indexOf("name") >= 0) return "Jane Doe"; return "Enter " + (l || "value"); }
+function navItems(label) {
+  if (label) {
+    var s = label.split("·").join("|").split("/").join("|").split(",").join("|").split("|");
+    var out = []; for (var k = 0; k < s.length; k++) { var t = s[k].trim(); if (t) out.push(t); }
+    if (out.length > 1) return out.slice(0, 5);
+  }
+  return ["Home", "Projects", "Activity", "Settings"];
+}
+function money(i) { var v = ((i * 734 + 128) % 9000) + 240; var s = String(v); return v >= 1000 ? "$" + s.slice(0, s.length - 3) + "," + s.slice(s.length - 3) : "$" + s; }
+function cellFor(col, i) {
+  var c = (col || "").toLowerCase();
+  if (hasWord(c, ["amount", "price", "cost", "total", "revenue", "budget"])) return money(i);
+  if (hasWord(c, ["date", "day", "created", "updated", "due", "when"])) return pick(["Aug 9", "Aug 12", "Sep 1", "Jul 28", "Aug 30"], i);
+  if (hasWord(c, ["status", "state"])) return null; // caller renders a badge
+  if (hasWord(c, ["name", "user", "owner", "assignee", "member", "author", "people", "contact"])) return pick(SAMPLE_NAMES, i);
+  if (hasWord(c, ["email"])) return pick(SAMPLE_NAMES, i).toLowerCase().split(" ").join(".") + "@acme.co";
+  if (hasWord(c, ["qty", "count", "number", "tasks", "items"])) return String(((i * 7 + 3) % 40) + 1);
+  if (hasWord(c, ["priority"])) return pick(["High", "Medium", "Low", "Urgent"], i);
+  if (hasWord(c, ["id", "key", "ticket", "ref"])) return "TP-" + (101 + i);
+  return pick(["Acme Corp", "North Star", "Blue Ridge", "Vertex Labs", "Harbor", "Summit Co"], i);
+}
+
 function renderBlock(b, screen) {
   var el, i, j, n = b.count || 3;
   switch (b.type) {
     case "list":
       el = h("div", "kids");
-      for (i = 0; i < n; i++) { var r = h("div", "row"); r.appendChild(h("div", "av")); r.appendChild(h("div", "ln")); el.appendChild(r); }
+      for (i = 0; i < n; i++) {
+        var r = h("div", "row");
+        r.appendChild(h("div", "av", initials(pick(SAMPLE_NAMES, i))));
+        var rc = h("div", "rc");
+        rc.appendChild(h("div", "ttl", pick(ITEM_TITLES, i)));
+        rc.appendChild(h("div", "sub", pick(SAMPLE_NAMES, i) + " · " + pick(SAMPLE_SUBS, i)));
+        r.appendChild(rc);
+        r.appendChild(h("div", "chev", "›"));
+        el.appendChild(r);
+      }
       break;
     case "card":
       el = h("div", "cards");
-      for (i = 0; i < (b.count || 2); i++) { var c = h("div", "b"); c.appendChild(h("div", "lab", b.label || "Card")); c.appendChild(h("div", "b-text")).appendChild(h("div", "ln")); el.appendChild(c); }
+      for (i = 0; i < (b.count || 3); i++) {
+        var c = h("div", "b");
+        var chd = h("div", "cardhd"); chd.appendChild(h("div", "ic")); chd.appendChild(h("div", "ttl", pick(ITEM_TITLES, i)));
+        c.appendChild(chd);
+        c.appendChild(h("div", "sub", pick(CARD_SUBS, i)));
+        var ft = h("div", "foot"); ft.appendChild(statusBadge(i)); ft.appendChild(h("span", "meta", pick(CARD_METAS, i)));
+        c.appendChild(ft);
+        el.appendChild(c);
+      }
       break;
     case "table":
       el = h("div", "tbl");
-      var cols = (b.columns && b.columns.length) ? b.columns : null;
-      var ncol = cols ? cols.length : 3;
+      var cols = (b.columns && b.columns.length) ? b.columns : ["Name", "Status", "Updated"];
+      var ncol = cols.length;
       var hr = h("div", "tr");
-      for (j = 0; j < ncol; j++) {
-        var hd = h("div", "td" + (cols ? " hd" : ""));
-        if (cols) hd.textContent = cols[j]; else hd.appendChild(h("div", "ln"));
-        hr.appendChild(hd);
-      }
+      for (j = 0; j < ncol; j++) hr.appendChild(h("div", "td hd", cols[j]));
       el.appendChild(hr);
-      for (i = 0; i < n; i++) { var tr = h("div", "tr"); for (j = 0; j < ncol; j++) tr.appendChild(h("div", "td")).appendChild(h("div", "ln")); el.appendChild(tr); }
+      for (i = 0; i < n; i++) {
+        var tr = h("div", "tr bd");
+        for (j = 0; j < ncol; j++) {
+          var td = h("div", "td");
+          var val = cellFor(cols[j], i);
+          if (val === null) td.appendChild(statusBadge(i)); else td.textContent = val;
+          tr.appendChild(td);
+        }
+        el.appendChild(tr);
+      }
       break;
-    case "button": el = h("button", "b-button", b.label || "Action"); break;
-    case "field": el = h("div", "b b-field"); el.appendChild(h("div", "lab", b.label || "Field")); el.appendChild(h("div", "inp")); break;
+    case "button": el = h("button", "b-button" + (isGhost(b.label) ? " ghost" : ""), b.label || "Action"); break;
+    case "field":
+      el = h("div", "b b-field");
+      el.appendChild(h("div", "lab", b.label || "Field"));
+      el.appendChild(h("div", "inp", placeholderFor(b.label)));
+      break;
     case "text":
       el = h("div", "b b-text"); if (b.label) el.appendChild(h("div", "lab", b.label));
-      if (b.copy) { el.appendChild(h("div", "copy", b.copy)); }
+      if (b.copy) el.appendChild(h("div", "copy", b.copy));
       else { el.appendChild(h("div", "ln")); el.appendChild(h("div", "ln")); }
       break;
-    case "image": el = h("div", "b b-image"); el.appendChild(h("span", "lab", b.label || "image")); break;
+    case "image": el = h("div", "b b-image"); el.appendChild(h("span", "meta", b.label || "Image")); break;
     case "hero":
       el = h("div", "b b-hero");
-      if (b.copy) el.appendChild(h("span", "copy", b.copy));
-      else el.appendChild(h("span", "lab", b.label || "Hero"));
+      el.appendChild(h("div", "h1", b.copy || b.label || "Build something great"));
+      el.appendChild(h("div", "sub", "A clear, benefit-led subheadline that sets up the primary action."));
+      var cta = h("div", "cta");
+      cta.appendChild(h("button", "b-button", "Get started"));
+      cta.appendChild(h("button", "b-button ghost", "Learn more"));
+      el.appendChild(cta);
       break;
-    case "header": case "nav": case "footer":
-      el = h("div", "b b-" + b.type); el.appendChild(h("span", "lab", b.label || b.type));
-      el.appendChild(h("span", "pill")); el.appendChild(h("span", "pill")); break;
+    case "header":
+      el = h("div", "b b-header");
+      el.appendChild(h("div", "brand", b.label || "App"));
+      el.appendChild(h("div", "grow"));
+      el.appendChild(h("div", "avatar", initials(pick(SAMPLE_NAMES, 0))));
+      break;
+    case "nav":
+      el = h("div", "b b-nav");
+      navItems(b.label).forEach(function (t, k) { el.appendChild(h("div", "tab" + (k === 0 ? " on" : ""), t)); });
+      break;
+    case "footer":
+      el = h("div", "b b-footer");
+      ["Privacy", "Terms", "Status", "© " + (b.label || "App")].forEach(function (t) { el.appendChild(h("span", null, t)); });
+      break;
     case "form":
       el = h("div", "b"); el.appendChild(h("div", "lab", b.label || "Form"));
       var kk = h("div", "kids"); (b.children || [{ type: "field" }, { type: "field" }, { type: "button", label: "Submit" }]).forEach(function (ch) { kk.appendChild(renderBlock(ch, screen)); }); el.appendChild(kk); break;

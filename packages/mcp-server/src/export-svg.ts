@@ -70,26 +70,104 @@ interface Theme {
   muted: string;
   radius: number;
   font: string;
+  /* R34 derived, opaque, theme-adaptive — computed from the tokens so a
+     theme change restyles the whole export (mirrors the preview's color-mix). */
+  hair: string;      // hairline border
+  sunken: string;    // input / header-bar fill, slightly off the surface
+  accentSoft: string; // accent tint for chips, badges, hero
+  zebra: string;     // alternating table row
 }
 
+const ERR = "#b04338";
+const ERR_BG = "#fdf3f2";
+/* legacy grayscale fallbacks, still used by the empty/loading/custom state
+   treatments in buildScreenSvg */
 const BLOCKLINE = "#c4c9c4";
 const BAR = "#e0e3e0";
 const SOFT = "#f1f3f1";
-const ERR = "#b04338";
-const ERR_BG = "#fdf3f2";
+
+/* -------- deterministic color mixing (opaque, for SVG/Figma import) -------- */
+function clampByte(n: number): number { return Math.max(0, Math.min(255, Math.round(n))); }
+function toHex2(n: number): string { return clampByte(n).toString(16).padStart(2, "0"); }
+function parseHex(c: string): [number, number, number] | null {
+  const m = /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.exec((c ?? "").trim());
+  if (!m) return null;
+  let s = m[1];
+  if (s.length === 3) s = s[0] + s[0] + s[1] + s[1] + s[2] + s[2];
+  return [parseInt(s.slice(0, 2), 16), parseInt(s.slice(2, 4), 16), parseInt(s.slice(4, 6), 16)];
+}
+/** a·(1-t) + b·t, returned as an opaque hex; falls back to `a` if unparseable. */
+function mix(a: string, b: string, t: number): string {
+  const A = parseHex(a), B = parseHex(b);
+  if (!A || !B) return a;
+  return "#" + toHex2(A[0] + (B[0] - A[0]) * t) + toHex2(A[1] + (B[1] - A[1]) * t) + toHex2(A[2] + (B[2] - A[2]) * t);
+}
 
 function themeOf(project: SvgProject): Theme {
   const t = project.tokens ?? {};
   const c = t.colors ?? {};
+  const accent = c.accent ?? "#2a2e2a";
+  const bg = c.bg ?? "#ffffff";
+  const surface = c.surface ?? "#ffffff";
+  const text = c.text ?? "#2a2e2a";
   return {
-    accent: c.accent ?? "#2a2e2a", // HTML button falls back to --ink
-    bg: c.bg ?? "#ffffff",
-    surface: c.surface ?? "#ffffff",
-    text: c.text ?? "#2a2e2a",
+    accent, bg, surface, text,
     muted: c.muted ?? "#6b706b",
     radius: typeof t.radius === "number" ? t.radius : 8,
     font: t.font ?? "-apple-system, 'Segoe UI', system-ui, sans-serif",
+    hair: mix(bg, text, 0.16),
+    sunken: mix(surface, text, 0.06),
+    accentSoft: mix(surface, accent, 0.16),
+    zebra: mix(surface, text, 0.03),
   };
+}
+
+/* --------- deterministic sample content (identical to the preview) --------- */
+const SAMPLE_NAMES = ["Alex Rivera", "Sam Chen", "Jordan Lee", "Taylor Kim", "Morgan Diaz", "Casey Park", "Riley Fox", "Jamie Wu"];
+const ITEM_TITLES = ["Onboarding flow", "Payment retry logic", "Search indexing", "Mobile navigation", "Export API", "Billing settings", "Auth token refresh", "Dark mode polish"];
+const SAMPLE_SUBS = ["Updated 2h ago", "In review", "Due Friday", "3 comments", "Blocked on API", "Ready to ship"];
+const CARD_SUBS = ["Cross-team initiative with three active workstreams.", "On track for the Q3 milestone.", "Waiting on design sign-off.", "Recently reopened after QA."];
+const CARD_METAS = ["12 tasks", "3 members", "Due Aug 30", "8 open"];
+const STATUS_WORDS = ["Active", "In review", "Done", "Pending", "Blocked"];
+function pick<T>(a: T[], i: number): T { return a[((i % a.length) + a.length) % a.length]; }
+function initials(s: string): string { s = (s || "").trim(); if (!s) return "U"; const p = s.split(" "); return (p[0].charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : "")).toUpperCase(); }
+function hasWord(c: string, list: string[]): boolean { return list.some((w) => c.indexOf(w) >= 0); }
+function isGhost(l: string): boolean { return hasWord((l || "").toLowerCase(), ["cancel", "back", "skip", "learn", "secondary", "dismiss", "later"]); }
+function placeholderFor(l: string): string { l = (l || "").toLowerCase(); if (l.indexOf("email") >= 0) return "you@company.com"; if (l.indexOf("password") >= 0) return "••••••••••"; if (l.indexOf("search") >= 0) return "Search…"; if (l.indexOf("name") >= 0) return "Jane Doe"; return "Enter " + (l || "value"); }
+function navItems(label: string): string[] {
+  if (label) {
+    const parts = label.split("·").join("|").split("/").join("|").split(",").join("|").split("|").map((s) => s.trim()).filter(Boolean);
+    if (parts.length > 1) return parts.slice(0, 5);
+  }
+  return ["Home", "Projects", "Activity", "Settings"];
+}
+function money(i: number): string { const v = ((i * 734 + 128) % 9000) + 240; const s = String(v); return v >= 1000 ? "$" + s.slice(0, s.length - 3) + "," + s.slice(s.length - 3) : "$" + s; }
+function cellFor(col: string, i: number): string | null {
+  const c = (col || "").toLowerCase();
+  if (hasWord(c, ["amount", "price", "cost", "total", "revenue", "budget"])) return money(i);
+  if (hasWord(c, ["date", "day", "created", "updated", "due", "when"])) return pick(["Aug 9", "Aug 12", "Sep 1", "Jul 28", "Aug 30"], i);
+  if (hasWord(c, ["status", "state"])) return null; // caller renders a badge
+  if (hasWord(c, ["name", "user", "owner", "assignee", "member", "author", "people", "contact"])) return pick(SAMPLE_NAMES, i);
+  if (hasWord(c, ["email"])) return pick(SAMPLE_NAMES, i).toLowerCase().split(" ").join(".") + "@acme.co";
+  if (hasWord(c, ["qty", "count", "number", "tasks", "items"])) return String(((i * 7 + 3) % 40) + 1);
+  if (hasWord(c, ["priority"])) return pick(["High", "Medium", "Low", "Urgent"], i);
+  if (hasWord(c, ["id", "key", "ticket", "ref"])) return "TP-" + (101 + i);
+  return pick(["Acme Corp", "North Star", "Blue Ridge", "Vertex Labs", "Harbor", "Summit Co"], i);
+}
+/** Trim a string to roughly fit `widthPx`, adding an ellipsis. */
+function truncate(s: string, widthPx: number): string {
+  const max = Math.max(4, Math.floor((widthPx - 26) / 6.7));
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
+}
+/** A rounded status pill: returns its SVG and pixel width. */
+function badgeSvg(txt: string, x: number, cy: number, th: Theme): { s: string; w: number } {
+  const w = 20 + txt.length * 6.6;
+  const s = [
+    rect(x, cy - 10, w, 20, `rx="10" fill="${th.accentSoft}"`),
+    `<circle cx="${num(x + 9)}" cy="${num(cy)}" r="3" fill="${th.accent}"/>`,
+    text(x + 16, cy + 4, txt, `font-size="11.5" font-weight="600" fill="${th.accent}"`),
+  ].join("\n");
+  return { s, w };
 }
 
 /* ------------------------------ utils ------------------------------ */
@@ -172,144 +250,169 @@ function blockSvg(b: SvgBlock, x: number, y: number, w: number, th: Theme): Rend
   let h = 0;
 
   switch (b.type) {
-    case "header":
-    case "nav":
+    case "header": {
+      h = 56;
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(text(x + 16, y + 34, label || "App", `font-size="15" font-weight="700" fill="${th.text}"`));
+      const av = 30, ax = x + w - 16 - av, ay = y + (h - av) / 2;
+      parts.push(`<circle cx="${num(ax + av / 2)}" cy="${num(ay + av / 2)}" r="${num(av / 2)}" fill="${th.accent}"/>`);
+      parts.push(text(ax + av / 2, ay + av / 2 + 4, initials(pick(SAMPLE_NAMES, 0)), `font-size="11" font-weight="700" fill="#ffffff" text-anchor="middle"`));
+      break;
+    }
+    case "nav": {
+      h = 44;
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.sunken}"`));
+      let nx = x + 6;
+      navItems(label).forEach((t, k) => {
+        const tw = 22 + t.length * 7;
+        if (k === 0) parts.push(rect(nx, y + 6, tw, h - 12, `rx="7" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
+        parts.push(text(nx + tw / 2, y + h / 2 + 4, t, k === 0
+          ? `font-size="13" font-weight="600" fill="${th.text}" text-anchor="middle"`
+          : `font-size="13" fill="${th.muted}" text-anchor="middle"`));
+        nx += tw + 6;
+      });
+      break;
+    }
     case "footer": {
       h = 44;
-      parts.push(rect(x, y, w, h, `rx="${r}" fill="${SOFT}" stroke="${BLOCKLINE}" stroke-width="1.5"`));
-      parts.push(text(x + 12, y + 27, label || b.type, `font-size="12" fill="${th.muted}"`));
-      parts.push(rect(x + w - 140, y + 18, 54, 8, `rx="4" fill="${BLOCKLINE}"`));
-      parts.push(rect(x + w - 76, y + 18, 54, 8, `rx="4" fill="${BLOCKLINE}"`));
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(text(x + w / 2, y + h / 2 + 4, ["Privacy", "Terms", "Status", "© " + (label || "App")].join("      "), `font-size="12" fill="${th.muted}" text-anchor="middle"`));
       break;
     }
     case "hero": {
-      h = 90;
-      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${BLOCKLINE}" stroke-width="1.5"`));
-      if (b.copy) {
-        parts.push(text(x + w / 2, y + h / 2 + 6, b.copy, `font-size="17" font-weight="600" fill="${th.text}" text-anchor="middle"`));
-      } else {
-        parts.push(text(x + w / 2, y + h / 2 + 4, label || "Hero", `font-size="12" fill="${th.muted}" text-anchor="middle"`));
-      }
+      h = 156;
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${mix(th.surface, th.accent, 0.10)}" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(text(x + w / 2, y + 58, b.copy || label || "Build something great", `font-size="22" font-weight="750" fill="${th.text}" text-anchor="middle"`));
+      parts.push(text(x + w / 2, y + 84, "A clear, benefit-led subheadline that sets up the primary action.", `font-size="13" fill="${th.muted}" text-anchor="middle"`));
+      const l1 = "Get started", l2 = "Learn more";
+      const w1 = 40 + l1.length * 7.5, w2 = 40 + l2.length * 7.5, gap = 10, bh = 38;
+      let bx = x + (w - (w1 + w2 + gap)) / 2; const by = y + 106;
+      parts.push(rect(bx, by, w1, bh, `rx="${Math.max(0, r - 2)}" fill="${th.accent}"`));
+      parts.push(text(bx + w1 / 2, by + 24, l1, `font-size="13" font-weight="600" fill="#ffffff" text-anchor="middle"`));
+      bx += w1 + gap;
+      parts.push(rect(bx, by, w2, bh, `rx="${Math.max(0, r - 2)}" fill="none" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(text(bx + w2 / 2, by + 24, l2, `font-size="13" font-weight="600" fill="${th.text}" text-anchor="middle"`));
       break;
     }
     case "text": {
-      let cy = y + 10;
-      if (label !== "") {
-        parts.push(text(x + 12, cy + 10, label, `font-size="12" fill="${th.muted}"`));
-        cy += 18;
-      }
+      let cy = y + 14;
+      const inner: string[] = [];
+      if (label !== "") { inner.push(text(x + 16, cy, label.toUpperCase(), `font-size="11" font-weight="600" letter-spacing=".04em" fill="${th.muted}"`)); cy += 18; }
       if (b.copy) {
-        const lines = wrapText(b.copy, Math.max(10, Math.floor((w - 24) / 7.5)));
-        for (const line of lines) {
-          parts.push(text(x + 12, cy + 13, line, `font-size="13" fill="${th.text}"`));
-          cy += 18;
+        for (const line of wrapText(b.copy, Math.max(10, Math.floor((w - 32) / 7)))) {
+          inner.push(text(x + 16, cy + 8, line, `font-size="13.5" fill="${th.text}"`)); cy += 20;
         }
       } else {
-        parts.push(rect(x + 12, cy + 4, w - 24, 8, `rx="4" fill="${BAR}"`));
-        parts.push(rect(x + 12, cy + 19, (w - 24) * 0.6, 8, `rx="4" fill="${BAR}"`));
+        inner.push(rect(x + 16, cy, w - 32, 9, `rx="5" fill="${th.hair}"`));
+        inner.push(rect(x + 16, cy + 15, (w - 32) * 0.6, 9, `rx="5" fill="${th.hair}"`));
         cy += 30;
       }
-      h = cy + 10 - y;
-      parts.unshift(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${BLOCKLINE}" stroke-width="1.5"`));
+      h = cy + 14 - y;
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(...inner);
       break;
     }
     case "button": {
-      h = 34;
-      const bw = Math.min(w, 36 + (label || "Action").length * 7.5);
-      parts.push(rect(x, y, bw, h, `rx="${r}" fill="${th.accent}"`));
-      parts.push(text(x + bw / 2, y + 21, label || "Action", `font-size="13" fill="#ffffff" text-anchor="middle"`));
+      h = 38;
+      const lbl = label || "Action";
+      const bw = Math.min(w, 40 + lbl.length * 7.5);
+      if (isGhost(label)) {
+        parts.push(rect(x, y, bw, h, `rx="${Math.max(0, r - 2)}" fill="none" stroke="${th.hair}" stroke-width="1"`));
+        parts.push(text(x + bw / 2, y + 24, lbl, `font-size="13" font-weight="600" fill="${th.text}" text-anchor="middle"`));
+      } else {
+        parts.push(rect(x, y, bw, h, `rx="${Math.max(0, r - 2)}" fill="${th.accent}"`));
+        parts.push(text(x + bw / 2, y + 24, lbl, `font-size="13" font-weight="600" fill="#ffffff" text-anchor="middle"`));
+      }
       break;
     }
     case "field": {
-      h = 58;
-      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${BLOCKLINE}" stroke-width="1.5"`));
-      parts.push(text(x + 12, y + 18, label || "Field", `font-size="12" fill="${th.muted}"`));
-      parts.push(rect(x + 10, y + 24, w - 20, 26, `rx="6" fill="#fdfdfd" stroke="${BLOCKLINE}" stroke-width="1.5"`));
+      h = 66;
+      parts.push(text(x, y + 14, label || "Field", `font-size="12.5" font-weight="600" fill="${th.text}"`));
+      parts.push(rect(x, y + 22, w, 40, `rx="${Math.max(0, r - 2)}" fill="${th.sunken}" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(text(x + 13, y + 47, placeholderFor(label), `font-size="13" fill="${th.muted}"`));
       break;
     }
     case "image": {
-      h = 80;
-      parts.push(rect(x, y, w, h, `rx="${r}" fill="#eef0ee" stroke="${BLOCKLINE}" stroke-width="1.5"`));
-      parts.push(`<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y}" stroke="${BLOCKLINE}" stroke-width="1"/>`);
-      parts.push(`<line x1="${x}" y1="${y}" x2="${x + w}" y2="${y + h}" stroke="${BLOCKLINE}" stroke-width="1"/>`);
-      parts.push(text(x + w / 2, y + h / 2 + 4, label || "image", `font-size="12" fill="${th.muted}" text-anchor="middle"`));
+      h = 130;
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.accentSoft}" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(text(x + w / 2, y + h / 2 + 4, label || "Image", `font-size="12" fill="${th.muted}" text-anchor="middle"`));
       break;
     }
     case "list": {
-      const n = b.count ?? 3;
-      const rowH = 44;
+      const n = b.count ?? 3, rowH = 56, gap = 10;
       for (let i = 0; i < n; i++) {
-        const ry = y + i * (rowH + 8);
-        parts.push(rect(x, ry, w, rowH, `rx="${r}" fill="${th.surface}" stroke="${BLOCKLINE}" stroke-width="1.5"`));
-        parts.push(`<circle cx="${x + 25}" cy="${ry + 22}" r="13" fill="${BAR}"/>`);
-        parts.push(rect(x + 48, ry + 18, w - 60, 8, `rx="4" fill="${BAR}"`));
+        const ry = y + i * (rowH + gap);
+        parts.push(rect(x, ry, w, rowH, `rx="${r}" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
+        const av = 34, ax = x + 14, ay = ry + (rowH - av) / 2;
+        parts.push(`<circle cx="${num(ax + av / 2)}" cy="${num(ay + av / 2)}" r="${num(av / 2)}" fill="${th.accent}"/>`);
+        parts.push(text(ax + av / 2, ay + av / 2 + 4, initials(pick(SAMPLE_NAMES, i)), `font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle"`));
+        const tx = ax + av + 12;
+        parts.push(text(tx, ry + 24, pick(ITEM_TITLES, i), `font-size="14" font-weight="650" fill="${th.text}"`));
+        parts.push(text(tx, ry + 42, pick(SAMPLE_NAMES, i) + " · " + pick(SAMPLE_SUBS, i), `font-size="12.5" fill="${th.muted}"`));
+        parts.push(text(x + w - 18, ry + rowH / 2 + 6, "›", `font-size="18" fill="${th.muted}" text-anchor="middle" opacity="0.5"`));
       }
-      h = n * rowH + (n - 1) * 8;
+      h = n * rowH + (n - 1) * gap;
       break;
     }
     case "card": {
-      const n = b.count ?? 2;
-      const cols = Math.min(n, Math.max(1, Math.floor(w / 160)));
-      const cardW = (w - (cols - 1) * GAP) / cols;
-      const cardH = 70;
+      const n = b.count ?? 3;
+      const cols = Math.max(1, Math.min(n, Math.floor((w + GAP) / (180 + GAP))));
+      const cardW = (w - (cols - 1) * GAP) / cols, cardH = 118;
       const rows = Math.ceil(n / cols);
       for (let i = 0; i < n; i++) {
         const cx = x + (i % cols) * (cardW + GAP);
         const cyy = y + Math.floor(i / cols) * (cardH + GAP);
-        parts.push(rect(cx, cyy, cardW, cardH, `rx="${r}" fill="${th.surface}" stroke="${BLOCKLINE}" stroke-width="1.5"`));
-        parts.push(text(cx + 12, cyy + 22, label || "Card", `font-size="12" fill="${th.muted}"`));
-        parts.push(rect(cx + 12, cyy + 36, cardW - 24, 8, `rx="4" fill="${BAR}"`));
+        parts.push(rect(cx, cyy, cardW, cardH, `rx="${r}" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
+        parts.push(rect(cx + 14, cyy + 14, 26, 26, `rx="7" fill="${th.accentSoft}"`));
+        parts.push(text(cx + 14 + 35, cyy + 31, truncate(pick(ITEM_TITLES, i), cardW - 60), `font-size="14" font-weight="650" fill="${th.text}"`));
+        parts.push(text(cx + 14, cyy + 60, truncate(pick(CARD_SUBS, i), cardW), `font-size="12.5" fill="${th.muted}"`));
+        parts.push(badgeSvg(pick(STATUS_WORDS, i), cx + 14, cyy + cardH - 18, th).s);
+        parts.push(text(cx + cardW - 14, cyy + cardH - 14, pick(CARD_METAS, i), `font-size="12" fill="${th.muted}" text-anchor="end"`));
       }
       h = rows * cardH + (rows - 1) * GAP;
       break;
     }
     case "table": {
-      const cols = b.columns && b.columns.length > 0 ? b.columns : null;
-      const ncol = cols ? cols.length : 3;
-      const rowH = 32;
-      const n = b.count ?? 3;
-      const colW = w / ncol;
-      h = (n + 1) * rowH;
-      parts.push(rect(x, y, w, rowH, `fill="${SOFT}"`));
+      const cols = b.columns && b.columns.length > 0 ? b.columns : ["Name", "Status", "Updated"];
+      const ncol = cols.length, headH = 38, rowH = 40, n = b.count ?? 3, colW = w / ncol;
+      h = headH + n * rowH;
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
       for (let j = 0; j < ncol; j++) {
-        if (cols) {
-          parts.push(text(x + j * colW + 8, y + 20, cols[j].toUpperCase(),
-            `font-size="11" font-weight="600" letter-spacing=".04em" fill="${th.muted}"`));
-        } else {
-          parts.push(rect(x + j * colW + 8, y + 12, colW - 16, 8, `rx="4" fill="${BAR}"`));
-        }
+        parts.push(text(x + j * colW + 12, y + 24, cols[j].toUpperCase(), `font-size="11" font-weight="700" letter-spacing=".04em" fill="${th.muted}"`));
       }
-      for (let i = 1; i <= n; i++) {
-        const ry = y + i * rowH;
-        parts.push(`<line x1="${x}" y1="${ry}" x2="${x + w}" y2="${ry}" stroke="#e4e7e4" stroke-width="1"/>`);
+      for (let i = 0; i < n; i++) {
+        const ry = y + headH + i * rowH;
+        parts.push(`<line x1="${num(x)}" y1="${num(ry)}" x2="${num(x + w)}" y2="${num(ry)}" stroke="${th.hair}" stroke-width="1"/>`);
         for (let j = 0; j < ncol; j++) {
-          parts.push(rect(x + j * colW + 8, ry + 12, colW - 16, 8, `rx="4" fill="${BAR}"`));
+          const cxp = x + j * colW + 12, cyc = ry + rowH / 2;
+          const val = cellFor(cols[j], i);
+          if (val === null) parts.push(badgeSvg(pick(STATUS_WORDS, i), cxp, cyc, th).s);
+          else parts.push(text(cxp, cyc + 4, truncate(val, colW), `font-size="13" fill="${th.text}"`));
         }
       }
-      parts.push(rect(x, y, w, h, `rx="${r}" fill="none" stroke="${BLOCKLINE}" stroke-width="1.5"`));
       break;
     }
     case "form": {
       const children = b.children && b.children.length > 0
         ? b.children
         : [{ type: "field" }, { type: "field" }, { type: "button", label: "Submit" }];
-      let cy = y + 26;
+      let cy = y + 34;
       const inner: string[] = [];
       for (const child of children) {
-        const rendered = blockSvg(child, x + 10, cy, w - 20, th);
+        const rendered = blockSvg(child, x + 16, cy, w - 32, th);
         inner.push(rendered.s);
-        cy += rendered.h + 8;
+        cy += rendered.h + 10;
       }
-      h = cy - 8 + 10 - y;
-      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${BLOCKLINE}" stroke-width="1.5"`));
-      parts.push(text(x + 12, y + 18, label || "Form", `font-size="12" fill="${th.muted}"`));
+      h = cy - 10 + 14 - y;
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(text(x + 16, y + 22, (label || "Form").toUpperCase(), `font-size="11" font-weight="600" letter-spacing=".04em" fill="${th.muted}"`));
       parts.push(...inner);
       break;
     }
     default: { // custom + unknown
-      h = 44;
-      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${BLOCKLINE}" stroke-width="1.5"`));
-      parts.push(text(x + 12, y + 27, label || b.type, `font-size="12" fill="${th.muted}"`));
+      h = 48;
+      parts.push(rect(x, y, w, h, `rx="${r}" fill="${th.surface}" stroke="${th.hair}" stroke-width="1"`));
+      parts.push(text(x + 16, y + 29, label || b.type, `font-size="13" fill="${th.text}"`));
     }
   }
 
