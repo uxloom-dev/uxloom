@@ -135,9 +135,17 @@ export const TokensSchema = z.object({
     surface: z.string().regex(hexColor).optional(),
     text: z.string().regex(hexColor).optional(),
     muted: z.string().regex(hexColor).optional(),
+    // R32 — optional structural + semantic colors; renderers derive sensible
+    // defaults when absent, so existing projects need no change.
+    border: z.string().regex(hexColor).optional(),
+    success: z.string().regex(hexColor).optional(),
+    warning: z.string().regex(hexColor).optional(),
+    danger: z.string().regex(hexColor).optional(),
   }).strict().optional(),
   radius: z.number().min(0).max(32).optional(),
   font: z.string().min(1).optional(),
+  // R32 — light/dark hint. When absent, renderers auto-detect from bg luminance.
+  mode: z.enum(["light", "dark"]).optional(),
 }).strict();
 
 export const ProjectSchema = z.object({

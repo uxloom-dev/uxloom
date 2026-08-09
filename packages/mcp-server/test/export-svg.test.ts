@@ -186,3 +186,32 @@ describe("escapeXml", () => {
     expect(escapeXml(`&<>"'`)).toBe("&amp;&lt;&gt;&quot;&apos;");
   });
 });
+
+describe("expanded token model (R32)", () => {
+  const withStatus: SvgProject = {
+    name: "x",
+    platforms: ["web"],
+    screens: [{ id: "S", requiredStates: ["default"], layout: { blocks: [{ type: "table", columns: ["Task", "Status"], count: 3 }] } }],
+  };
+
+  it("colors status cells semantically, honoring token overrides", () => {
+    const themed: SvgProject = { ...withStatus, tokens: { colors: { success: "#00ff88" } } };
+    const svg = buildScreenSvg(themed, "S", "default");
+    // rows cycle Active / In review / Done → the overridden success color appears
+    expect(svg).toContain("#00ff88");
+    // default warning (In review) still present
+    expect(svg).toContain("#f59e0b");
+  });
+
+  it("auto-detects dark mode from bg luminance and still renders well-formed SVG", () => {
+    const dark: SvgProject = { ...withStatus, tokens: { colors: { bg: "#0b0b10", surface: "#16161c", text: "#eeeeee" } } };
+    const svg = buildScreenSvg(dark, "S", "default");
+    expect(svg).toMatch(/^<svg /);
+    expect(svg).toMatch(/#22c55e|#ef4444|#f59e0b/); // semantic defaults used
+  });
+
+  it("uses a border token override for hairlines when provided", () => {
+    const bordered: SvgProject = { ...withStatus, tokens: { colors: { border: "#123456" } } };
+    expect(buildScreenSvg(bordered, "S", "default")).toContain("#123456");
+  });
+});

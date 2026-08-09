@@ -115,10 +115,13 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
             font-family: var(--mock-font, inherit);
             /* R30 design-system tokens, derived from the project's colors so a
                theme change restyles everything; theme-adaptive on light & dark */
-            --hair: color-mix(in srgb, var(--mock-text, #2a2e2a) 13%, transparent);
+            --hair: var(--mock-border, color-mix(in srgb, var(--mock-text, #2a2e2a) 13%, transparent));
             --surf: var(--block, #ffffff);
             --sunken: color-mix(in srgb, var(--mock-text, #2a2e2a) 6%, var(--mock-bg, #ffffff));
             --accent-soft: color-mix(in srgb, var(--mock-accent, #2a2e2a) 15%, transparent);
+            --success: var(--mock-success, #22c55e);
+            --warning: var(--mock-warning, #f59e0b);
+            --danger: var(--mock-danger, #ef4444);
             --elev-1: 0 1px 2px rgba(0,0,0,.05), 0 1px 3px rgba(0,0,0,.08);
             --elev-2: 0 6px 20px rgba(0,0,0,.12), 0 2px 6px rgba(0,0,0,.07); }
 
@@ -211,6 +214,10 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
            padding: 3px 9px; border-radius: 999px; background: var(--accent-soft);
            color: var(--mock-accent, var(--ink)); }
   .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  /* R32 — semantic status pills */
+  .badge.ok { background: color-mix(in srgb, var(--success) 20%, transparent); color: var(--success); }
+  .badge.warn { background: color-mix(in srgb, var(--warning) 20%, transparent); color: var(--warning); }
+  .badge.bad { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
 
   .srcchip { display: inline-block; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
              font-size: 10px; color: var(--mock-muted, var(--dim)); border: 1px solid var(--hair);
@@ -419,7 +426,8 @@ function postJson(url, payload) {
 function applyTheme() {
   var r = document.documentElement.style;
   ["--accent", "--mock-accent", "--mock-bg", "--block", "--mock-text", "--mock-muted",
-   "--mock-radius", "--mock-font"].forEach(function (p) { r.removeProperty(p); });
+   "--mock-radius", "--mock-font", "--mock-border", "--mock-success", "--mock-warning",
+   "--mock-danger"].forEach(function (p) { r.removeProperty(p); });
   var t = data && data.tokens;
   if (!t) return;
   var c = t.colors || {};
@@ -430,6 +438,11 @@ function applyTheme() {
   if (c.muted) r.setProperty("--mock-muted", c.muted);
   if (typeof t.radius === "number") r.setProperty("--mock-radius", t.radius + "px");
   if (t.font) r.setProperty("--mock-font", t.font);
+  // R32 — structural + semantic color tokens
+  if (c.border) r.setProperty("--mock-border", c.border);
+  if (c.success) r.setProperty("--mock-success", c.success);
+  if (c.warning) r.setProperty("--mock-warning", c.warning);
+  if (c.danger) r.setProperty("--mock-danger", c.danger);
 }
 
 /* ---------- derive blocks when a screen declares no layout ---------- */
@@ -498,7 +511,13 @@ var CARD_METAS = ["12 tasks", "3 members", "Due Aug 30", "8 open"];
 var STATUS_WORDS = ["Active", "In review", "Done", "Pending", "Blocked"];
 function pick(a, i) { return a[((i % a.length) + a.length) % a.length]; }
 function initials(s) { s = (s || "").trim(); if (!s) return "U"; var p = s.split(" "); return (p[0].charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : "")).toUpperCase(); }
-function statusBadge(i) { return h("span", "badge", pick(STATUS_WORDS, i)); }
+function statusBadge(i) {
+  var w = pick(STATUS_WORDS, i), l = w.toLowerCase(), cls = "badge";
+  if (hasWord(l, ["done", "active", "ship", "complete", "approved", "live"])) cls += " ok";
+  else if (hasWord(l, ["block", "error", "fail", "reject", "overdue"])) cls += " bad";
+  else if (hasWord(l, ["review", "pending", "wait", "progress", "draft"])) cls += " warn";
+  return h("span", cls, w);
+}
 function hasWord(c, list) { for (var k = 0; k < list.length; k++) if (c.indexOf(list[k]) >= 0) return true; return false; }
 function isGhost(l) { return hasWord((l || "").toLowerCase(), ["cancel", "back", "skip", "learn", "secondary", "dismiss", "later"]); }
 function placeholderFor(l) { l = (l || "").toLowerCase(); if (l.indexOf("email") >= 0) return "you@company.com"; if (l.indexOf("password") >= 0) return "••••••••••"; if (l.indexOf("search") >= 0) return "Search…"; if (l.indexOf("name") >= 0) return "Jane Doe"; return "Enter " + (l || "value"); }

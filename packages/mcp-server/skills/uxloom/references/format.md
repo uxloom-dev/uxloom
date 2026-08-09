@@ -131,6 +131,13 @@ journeys with `"platforms": ["mweb"]` on the journey.
 the system: `{ "colors": { "accent": "#2F6B52", "bg": "#FAF9F6", "surface":
 "#FFFFFF", "text": "#2B2725", "muted": "#7A716B" }, "radius": 8, "font":
 "Iowan Old Style, serif" }`. Verify pairs with uxloom:palette_check.
+Optional (v0.12, all default-derived so existing projects need no change):
+`colors.border` overrides the hairline; `colors.success` / `warning` /
+`danger` color status pills semantically (a "Done" badge goes green, a
+"Blocked" badge red) in both the preview and the SVG export; `mode:
+"light" | "dark"` tunes elevation and tint — auto-detected from `bg`
+luminance when omitted. The high-fidelity renderer (v0.11) turns these
+tokens into production-looking UI, not wireframes.
 
 **Content-rich blocks** — table blocks take `columns: ["Recipient",
 "Status", "Sent"]`; text/hero blocks take `copy` (real copy, not lorem);

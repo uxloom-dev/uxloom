@@ -124,9 +124,16 @@ export interface Rationale {
 
 /** Design tokens — applied by the preview, verifiable by palette_check. */
 export interface Tokens {
-  colors?: { accent?: string; bg?: string; surface?: string; text?: string; muted?: string };
+  colors?: {
+    accent?: string; bg?: string; surface?: string; text?: string; muted?: string;
+    /** R32 — optional structural + semantic colors; renderers derive defaults. */
+    border?: string;
+    success?: string; warning?: string; danger?: string;
+  };
   radius?: number;
   font?: string;
+  /** R32 — light/dark hint; auto-detected from bg luminance when absent. */
+  mode?: "light" | "dark";
 }
 
 export interface Screen {

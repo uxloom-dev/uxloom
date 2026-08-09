@@ -52,9 +52,13 @@ export interface SvgProject {
   screens?: SvgScreen[];
   journeys?: SvgJourney[];
   tokens?: {
-    colors?: { accent?: string; bg?: string; surface?: string; text?: string; muted?: string };
+    colors?: {
+      accent?: string; bg?: string; surface?: string; text?: string; muted?: string;
+      border?: string; success?: string; warning?: string; danger?: string;
+    };
     radius?: number;
     font?: string;
+    mode?: "light" | "dark";
   };
   include?: string[];
   [key: string]: unknown;
@@ -76,6 +80,10 @@ interface Theme {
   sunken: string;    // input / header-bar fill, slightly off the surface
   accentSoft: string; // accent tint for chips, badges, hero
   zebra: string;     // alternating table row
+  success: string;   // R32 semantic status colors
+  warning: string;
+  danger: string;
+  mode: "light" | "dark"; // R32 — auto-detected from bg unless overridden
 }
 
 const ERR = "#b04338";
@@ -102,6 +110,12 @@ function mix(a: string, b: string, t: number): string {
   if (!A || !B) return a;
   return "#" + toHex2(A[0] + (B[0] - A[0]) * t) + toHex2(A[1] + (B[1] - A[1]) * t) + toHex2(A[2] + (B[2] - A[2]) * t);
 }
+/** Relative luminance (0 dark … 1 light) for auto light/dark detection. */
+function luminance(c: string): number {
+  const rgb = parseHex(c);
+  if (!rgb) return 1;
+  return (0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]) / 255;
+}
 
 function themeOf(project: SvgProject): Theme {
   const t = project.tokens ?? {};
@@ -115,11 +129,24 @@ function themeOf(project: SvgProject): Theme {
     muted: c.muted ?? "#6b706b",
     radius: typeof t.radius === "number" ? t.radius : 8,
     font: t.font ?? "-apple-system, 'Segoe UI', system-ui, sans-serif",
-    hair: mix(bg, text, 0.16),
+    hair: c.border ?? mix(bg, text, 0.16),
     sunken: mix(surface, text, 0.06),
     accentSoft: mix(surface, accent, 0.16),
     zebra: mix(surface, text, 0.03),
+    success: c.success ?? "#22c55e",
+    warning: c.warning ?? "#f59e0b",
+    danger: c.danger ?? "#ef4444",
+    mode: t.mode ?? (luminance(bg) < 0.5 ? "dark" : "light"),
   };
+}
+
+/** Map a status word to a semantic color (R32). */
+function statusColor(word: string, th: Theme): string {
+  const w = (word || "").toLowerCase();
+  if (hasWord(w, ["done", "active", "ship", "complete", "approved", "live", "success"])) return th.success;
+  if (hasWord(w, ["block", "error", "fail", "reject", "overdue", "denied"])) return th.danger;
+  if (hasWord(w, ["review", "pending", "wait", "progress", "draft"])) return th.warning;
+  return th.accent;
 }
 
 /* --------- deterministic sample content (identical to the preview) --------- */
@@ -159,13 +186,15 @@ function truncate(s: string, widthPx: number): string {
   const max = Math.max(4, Math.floor((widthPx - 26) / 6.7));
   return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }
-/** A rounded status pill: returns its SVG and pixel width. */
+/** A rounded, semantically-colored status pill: returns its SVG and pixel width. */
 function badgeSvg(txt: string, x: number, cy: number, th: Theme): { s: string; w: number } {
+  const color = statusColor(txt, th);
+  const bg = mix(th.surface, color, th.mode === "dark" ? 0.26 : 0.18);
   const w = 20 + txt.length * 6.6;
   const s = [
-    rect(x, cy - 10, w, 20, `rx="10" fill="${th.accentSoft}"`),
-    `<circle cx="${num(x + 9)}" cy="${num(cy)}" r="3" fill="${th.accent}"/>`,
-    text(x + 16, cy + 4, txt, `font-size="11.5" font-weight="600" fill="${th.accent}"`),
+    rect(x, cy - 10, w, 20, `rx="10" fill="${bg}"`),
+    `<circle cx="${num(x + 9)}" cy="${num(cy)}" r="3" fill="${color}"/>`,
+    text(x + 16, cy + 4, txt, `font-size="11.5" font-weight="600" fill="${color}"`),
   ].join("\n");
   return { s, w };
 }
