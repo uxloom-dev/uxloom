@@ -140,6 +140,24 @@ produces the state — never relocate the marker to silence the check.
 Static heuristics narrow washing; they cannot eliminate it — fixture and
 browser tiers (4–5) remain future work.
 
+## Design audit — drift between the contract and the design file
+
+The same drift check runs in the other direction, against a Figma/Penpot
+export instead of code. `uxloom:design_audit` (or `npx uxloom audit
+--design <file|dir>`) reads a designer's exported SVG or JSON — or a
+`uxloom export --svg --manifest` folder — recovers each frame's screen×state
+from its name (grammar `Screen / state`, or the manifest), and reports:
+
+- `design-screen-unmapped` (error) — a contracted screen has no frame
+- `design-state-missing` (error) — a required state has no frame
+- `design-frame-unmapped` (warning) — a frame matches no contracted screen
+
+Pass `scaffold` / `--scaffold <out>` to write a draft `{ screens }` fragment
+for the unmapped frames (it never overwrites). Zero API coupling — it reads
+files the designer already exports. Frames named by `uxloom export --svg`
+round-trip losslessly, so a design that started from the contract re-audits
+clean until someone drops a required state.
+
 ## Workflow for agents
 
 1. When **implementing** from a contract: emit markers as you build each
@@ -147,5 +165,8 @@ browser tiers (4–5) remain future work.
 2. When **auditing** an existing codebase: run uxloom:project_audit; for
    unproven screens, read the code, add markers where states genuinely
    render, re-run. States you cannot mark truthfully are your gap list.
-3. In CI: `npx uxloom check && npx uxloom audit` — design completeness
+3. When **auditing a design**: run uxloom:design_audit against the designer's
+   export; missing screens/states are the design's gap list — feed them back
+   into the contract or the mocks.
+4. In CI: `npx uxloom check && npx uxloom audit` — design completeness
    and implementation fidelity, both gated on exit codes.

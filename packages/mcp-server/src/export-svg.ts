@@ -11,6 +11,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { globToRegExp } from "./preview-export.js";
+import { blockLayerName, frameName } from "./design-naming.js";
 
 /* Structural types: schema fields may land in parallel lanes, so access
    stays optional/structural rather than importing the nominal types. */
@@ -36,10 +37,20 @@ export interface SvgScreen {
   components?: SvgComponent[];
   layout?: { blocks?: SvgBlock[] };
 }
+export interface SvgJourneyState {
+  screen?: string;
+  on?: Record<string, string | { target?: string }>;
+}
+export interface SvgJourney {
+  id?: string;
+  entry?: string;
+  states?: Record<string, SvgJourneyState>;
+}
 export interface SvgProject {
   name?: string;
   platforms?: string[];
   screens?: SvgScreen[];
+  journeys?: SvgJourney[];
   tokens?: {
     colors?: { accent?: string; bg?: string; surface?: string; text?: string; muted?: string };
     radius?: number;
@@ -129,6 +140,15 @@ function rect(x: number, y: number, w: number, h: number, attrs: string): string
 
 function text(x: number, y: number, content: string, attrs: string): string {
   return `<text x="${num(x)}" y="${num(y)}" ${attrs}>${escapeXml(content)}</text>`;
+}
+
+/**
+ * Wrap a block's markup in a named `<g>` (R27). The `<title>` carries the
+ * R26 layer name — Figma/Penpot read it as the layer/group name on import,
+ * so a repeated block is one click from becoming a component.
+ */
+function group(name: string, id: string, inner: string): string {
+  return `<g id="${id}"><title>${escapeXml(name)}</title>\n${inner}\n</g>`;
 }
 
 /* -------------------- block layout + rendering ---------------------- */
@@ -356,9 +376,10 @@ export function buildScreenSvg(project: SvgProject, screenId: string, stateId: s
 
   const content: string[] = [];
   if (stateId === "empty") {
-    for (const b of blocks.filter((bb) => bb.type === "header" || bb.type === "nav")) {
+    for (const [i, b] of blocks.entries()) {
+      if (b.type !== "header" && b.type !== "nav") continue;
       const rendered = blockSvg(b, x, y, innerW, th);
-      content.push(rendered.s);
+      content.push(group(blockLayerName(i, b.type, b.label), `block-${i}`, rendered.s));
       y += rendered.h + GAP;
     }
     const eh = 110;
@@ -375,9 +396,9 @@ export function buildScreenSvg(project: SvgProject, screenId: string, stateId: s
       y += measured.h + GAP;
     }
   } else {
-    for (const b of blocks) {
+    for (const [i, b] of blocks.entries()) {
       const rendered = blockSvg(b, x, y, innerW, th);
-      content.push(rendered.s);
+      content.push(group(blockLayerName(i, b.type, b.label), `block-${i}`, rendered.s));
       y += rendered.h + GAP;
     }
   }
@@ -405,7 +426,7 @@ export function buildScreenSvg(project: SvgProject, screenId: string, stateId: s
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" font-family="${escapeXml(th.font)}">`,
-    `<title>${escapeXml(`${screenId} — ${stateId}`)}</title>`,
+    `<title>${escapeXml(frameName(screenId, stateId))}</title>`,
     rect(0, 0, width, height, `fill="${th.bg}"`),
     body.join("\n"),
     `</svg>`,
@@ -463,15 +484,86 @@ export function loadMergedProject(projectPath: string): SvgProject {
       if (Array.isArray(fragment.screens)) screens.push(...fragment.screens);
     }
   }
-  project.journeys = journeys;
+  project.journeys = journeys as SvgJourney[];
   project.screens = screens as SvgScreen[];
   delete project.include;
   return project;
 }
 
+/* --------------------- journey-ordered frame set --------------------- */
+
+/** One emitted frame: its file plus the R26 identity, journey included. */
+export interface FrameRef {
+  file: string;
+  journey?: string;
+  screen: string;
+  state: string;
+}
+
+/**
+ * Every screen×state frame the export writes, ordered by journey traversal
+ * (R27): BFS from each journey's entry through its transitions, then screens
+ * no journey references, in declared order. Each screen is emitted once,
+ * attributed to the first journey that reaches it. The *set* of frames is
+ * identical to the flat per-screen×state export — only the order and the
+ * journey attribution are added, so `--manifest` is the machine-readable
+ * "page per journey" without changing which files are written.
+ */
+export function orderedFrames(project: SvgProject): FrameRef[] {
+  const screens = project.screens ?? [];
+  const byId = new Map<string, SvgScreen>();
+  for (const s of screens) if (typeof s.id === "string" && s.id !== "") byId.set(s.id, s);
+  const statesOf = (s: SvgScreen): string[] =>
+    Array.isArray(s.requiredStates) && s.requiredStates.length > 0 ? s.requiredStates : ["default"];
+
+  const emitted = new Set<string>();
+  const frames: FrameRef[] = [];
+  const emit = (screenId: string, journey?: string): void => {
+    if (emitted.has(screenId)) return;
+    const screen = byId.get(screenId);
+    if (!screen) return;
+    emitted.add(screenId);
+    for (const state of statesOf(screen)) {
+      frames.push({ file: svgFileName(screenId, state), journey, screen: screenId, state });
+    }
+  };
+
+  for (const journey of project.journeys ?? []) {
+    const states = journey.states ?? {};
+    const stateIds = Object.keys(states);
+    const visited = new Set<string>();
+    const order: string[] = [];
+    const queue: string[] =
+      journey.entry && states[journey.entry] ? [journey.entry] : [...stateIds];
+    while (queue.length > 0) {
+      const st = queue.shift()!;
+      if (visited.has(st)) continue;
+      visited.add(st);
+      order.push(st);
+      for (const target of Object.values(states[st]?.on ?? {})) {
+        const ref = typeof target === "string" ? target : target?.target;
+        if (!ref) continue;
+        const next = ref.split("#")[0]; // "payment#error.declined" → "payment"
+        if (states[next] && !visited.has(next)) queue.push(next);
+      }
+    }
+    for (const st of stateIds) if (!visited.has(st)) order.push(st); // never drop
+    for (const st of order) {
+      const screenId = states[st]?.screen;
+      if (typeof screenId === "string" && screenId !== "") emit(screenId, journey.id);
+    }
+  }
+  for (const s of screens) if (typeof s.id === "string" && s.id !== "") emit(s.id);
+  return frames;
+}
+
 /* ------------------------------- CLI -------------------------------- */
 
-export function runSvgExport(fileArg: string | undefined, outDir: string): never {
+export function runSvgExport(
+  fileArg: string | undefined,
+  outDir: string,
+  opts: { manifest?: boolean } = {},
+): never {
   const projectPath = resolve(fileArg ?? process.env.UXLOOM_PROJECT ?? "uxloom.project.json");
   if (!existsSync(projectPath)) {
     console.error(`✖ no project file at ${projectPath}`);
@@ -491,27 +583,29 @@ export function runSvgExport(fileArg: string | undefined, outDir: string): never
   mkdirSync(dir, { recursive: true });
 
   console.log(`\nuxloom export --svg — vector wireframes, one per screen × state`);
-  let count = 0;
-  for (const screen of project.screens ?? []) {
-    if (typeof screen.id !== "string" || screen.id === "") continue;
-    const states = Array.isArray(screen.requiredStates) && screen.requiredStates.length > 0
-      ? screen.requiredStates
-      : ["default"];
-    for (const state of states) {
-      let svg: string;
-      try {
-        svg = buildScreenSvg(project, screen.id, state);
-      } catch (error) {
-        console.error(`✖ svg export failed: ${String(error instanceof Error ? error.message : error)}`);
-        process.exit(2);
-      }
-      const file = join(dir, svgFileName(screen.id, state));
-      writeFileSync(file, svg);
-      console.log(`  wrote  ${file}`);
-      count++;
+  const frames = orderedFrames(project);
+  const manifest: FrameRef[] = [];
+  for (const f of frames) {
+    let svg: string;
+    try {
+      svg = buildScreenSvg(project, f.screen, f.state);
+    } catch (error) {
+      console.error(`✖ svg export failed: ${String(error instanceof Error ? error.message : error)}`);
+      process.exit(2);
     }
+    writeFileSync(join(dir, f.file), svg);
+    console.log(`  wrote  ${join(dir, f.file)}`);
+    manifest.push(f);
   }
+  if (opts.manifest) {
+    // Plain array per RFC 0007 R27: [{ file, journey?, screen, state }].
+    const manifestPath = join(dir, "index.json");
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+    console.log(`  wrote  ${manifestPath}  (manifest — the reverse-audit key)`);
+  }
+  const count = manifest.length;
   console.log(`\n${count} SVG file${count === 1 ? "" : "s"} in ${dir}`);
   console.log("Import into Figma/Penpot: drag the SVGs in — text stays editable.");
+  if (!opts.manifest) console.log("Tip: add --manifest to write index.json for `uxloom audit --design`.");
   process.exit(0);
 }

@@ -15,6 +15,8 @@ import { createRequire } from "node:module";
 import { ProjectStore } from "./store.js";
 import { briefQuestions, compileBrief } from "./brief.js";
 import { loadMap, runAudit } from "./audit.js";
+import { auditDesign, parseDesignExport } from "./design-audit.js";
+import { existsSync, writeFileSync } from "node:fs";
 import {
   commentFindings,
   commentStatus,
@@ -389,6 +391,37 @@ export function createServer(store = new ProjectStore()): McpServer {
       const auditRoot = root ?? dirname(store.path);
       const map = loadMap(resolve(auditRoot, "uxloom.map.json"));
       return json(runAudit(project, auditRoot, map));
+    },
+  );
+
+  server.tool(
+    "design_audit",
+    "Reverse bridge (RFC 0007): audit a design export against the contract. Point it at a Figma/Penpot SVG or JSON export, a folder of them, or a uxloom `--manifest` index.json. Recovers screen×state from frame names (grammar \"<Screen> / <state>\", or the manifest) and reports which required screens/states have no frame: design-screen-unmapped, design-state-missing, design-frame-unmapped. Optional scaffold writes a draft {screens} fragment for frames not yet in the contract. Deterministic, zero-coupling — no Figma/Penpot API.",
+    {
+      design: z.string().describe("Path to the design export: an SVG/JSON file, a directory of them, or a uxloom index.json manifest"),
+      scaffold: z
+        .string()
+        .optional()
+        .describe("Write a draft {screens} fragment for unmapped frames to this path (refuses to overwrite an existing file)"),
+    },
+    async ({ design, scaffold }) => {
+      const designPath = resolve(dirname(store.path), design);
+      if (!existsSync(designPath)) {
+        return json({ ok: false, error: `no design export at ${designPath}` });
+      }
+      const project = store.load();
+      const frames = parseDesignExport(designPath);
+      const result = auditDesign(project, frames);
+      let scaffoldWritten: string | undefined;
+      if (scaffold) {
+        const out = resolve(dirname(store.path), scaffold);
+        if (existsSync(out)) {
+          return json({ ok: false, error: `refusing to overwrite ${out}; choose a new scaffold path`, ...result });
+        }
+        writeFileSync(out, JSON.stringify(result.scaffold, null, 2) + "\n");
+        scaffoldWritten = out;
+      }
+      return json({ ok: true, ...result, ...(scaffoldWritten ? { scaffoldWritten } : {}) });
     },
   );
 

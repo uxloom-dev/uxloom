@@ -19,7 +19,7 @@ export interface ReportableFinding {
 
 export interface ReportEnvelope {
   tool: "uxloom";
-  command: "check" | "audit";
+  command: "check" | "audit" | "design";
   version: string;
   summary: Record<string, number | string>;
   findings: ReportableFinding[];

@@ -9,8 +9,10 @@
  *   uxloom check [file]   validate design completeness (exit 1 on errors)
  *   uxloom audit [file]   audit implementation drift (exit 1 on drift)
  *                         [--live <baseUrl>] verify markers in the real DOM
+ *                         [--design <file|dir>] audit a design export vs the
+ *                         contract [--scaffold <out>] draft unmapped screens
  *   uxloom preview [file] live mocks: themed, commentable, editable
- *   uxloom export [file]  shareable HTML [--out path] | --svg <dir> | --png <dir>
+ *   uxloom export [file]  shareable HTML [--out path] | --svg <dir> [--manifest] | --png <dir>
  *   uxloom diff …         semantic design diff (files or --git <ref>)
  *   Flags for check/audit: --json | --sarif | --github | --update-baseline
  */
@@ -30,7 +32,7 @@ const { version } = createRequire(import.meta.url)("../package.json") as { versi
 const argv = process.argv.slice(2);
 const command = argv[0];
 
-const VALUE_FLAGS = new Set(["--out", "--live", "--png", "--svg"]);
+const VALUE_FLAGS = new Set(["--out", "--live", "--png", "--svg", "--design", "--scaffold"]);
 const flags: string[] = [];
 const values: Record<string, string> = {};
 const positionals: string[] = [];
@@ -58,10 +60,14 @@ if (command === "--version" || command === "-v" || command === "version") {
     if (notice) console.error(`\n▲ ${notice}\n`);
   }
   if (command === "check") runCheck(fileArg, flags);
-  else if (command === "audit") await runAuditCli(fileArg, flags, values["--live"]);
-  else if (command === "preview") runPreview(fileArg);
+  else if (command === "audit") {
+    if (values["--design"]) {
+      const { runDesignAuditCli } = await import("./design-audit-cli.js");
+      await runDesignAuditCli(values["--design"], fileArg, flags, values["--scaffold"]);
+    } else await runAuditCli(fileArg, flags, values["--live"]);
+  } else if (command === "preview") runPreview(fileArg);
   else if (command === "export") {
-    if (values["--svg"]) runSvgExport(fileArg, values["--svg"]);
+    if (values["--svg"]) runSvgExport(fileArg, values["--svg"], { manifest: flags.includes("--manifest") });
     else if (values["--png"]) {
       const { runPngExport } = await import("./export-png.js");
       try {
@@ -88,8 +94,9 @@ if (command === "--version" || command === "-v" || command === "version") {
   console.error("       uxloom init           # set up this project (MCP config + skill + starter file)");
   console.error("       uxloom check [file]   # design completeness   [--json|--sarif|--github|--update-baseline]");
   console.error("       uxloom audit [file]   # implementation drift  [--live <url>] [--json|--sarif|--github|--update-baseline]");
+  console.error("                             #   [--design <file|dir>] audit a design export vs the contract [--scaffold <out>]");
   console.error("       uxloom preview [file] # live mocks: themed, commentable, editable");
-  console.error("       uxloom export [file]  # shareable HTML [--out path] | --svg <dir> | --png <dir>");
+  console.error("       uxloom export [file]  # shareable HTML [--out path] | --svg <dir> [--manifest] | --png <dir>");
   console.error("       uxloom diff <old> <new> | --git <ref> [file]   [--json|--markdown]");
   console.error("       uxloom --version      # print version");
   process.exit(2);

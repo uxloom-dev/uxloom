@@ -116,7 +116,11 @@ The audit reads native markers: add `// data-ux-screen: X` and
 (`npm i -D playwright`), `npx uxloom audit --live http://localhost:3000`
 verifies markers in the real DOM, and `npx uxloom export --png shots/`
 renders every screen×state to images. `npx uxloom export --svg mocks/`
-needs nothing extra — the SVGs import straight into Figma or Penpot.
+needs nothing extra — the SVGs import straight into Figma or Penpot, with
+frames named `Screen / state`. Add `--manifest` and the bridge runs both
+ways: after a designer edits in Figma/Penpot and exports (SVG or JSON),
+`npx uxloom audit --design their-export/` proves which required screens and
+states the design is still missing — the same CI gate, now on the mocks.
 
 ### Designers: comment directly on the mocks — and hand them to the agent
 

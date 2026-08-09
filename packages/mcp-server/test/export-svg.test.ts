@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildScreenSvg, escapeXml, svgFileName } from "uxloom/dist/export-svg.js";
+import { buildScreenSvg, escapeXml, orderedFrames, svgFileName } from "uxloom/dist/export-svg.js";
 import type { SvgProject } from "uxloom/dist/export-svg.js";
 
 const project: SvgProject = {
@@ -123,6 +123,53 @@ describe("buildScreenSvg", () => {
 
   it("throws on unknown screens", () => {
     expect(() => buildScreenSvg(project, "Nope", "default")).toThrow(/no screen/);
+  });
+});
+
+describe("grammar naming in the SVG (R27)", () => {
+  it("titles the frame with the R26 grammar and names block groups", () => {
+    const svg = buildScreenSvg(project, "Payments", "error.network");
+    expect(svg).toContain("<title>Payments / error.network</title>"); // frame name
+    expect(svg).toContain("<title>2 · table</title>"); // unlabeled block: index · type
+    // groups are balanced/named so Figma reads them as layers
+    expect(svg).toMatch(/<g id="block-0"><title>0 · header: Payments<\/title>/);
+  });
+});
+
+describe("orderedFrames (R27 journey traversal)", () => {
+  const flow: SvgProject = {
+    name: "shop",
+    platforms: ["web"],
+    journeys: [
+      {
+        id: "Checkout",
+        entry: "cart",
+        states: { cart: { screen: "Cart", on: { pay: "pay" } }, pay: { screen: "Payment", final: true } },
+      },
+    ],
+    screens: [
+      // declared Payment-first, but traversal must visit Cart (entry) first
+      { id: "Payment", requiredStates: ["default", "error.declined"] },
+      { id: "Cart", requiredStates: ["default", "empty"] },
+      { id: "Orphan", requiredStates: ["default"] }, // no journey references it
+    ],
+  };
+
+  it("orders frames by traversal, attributes journeys, and appends orphans", () => {
+    const frames = orderedFrames(flow);
+    expect(frames.map((f) => `${f.screen}:${f.state}`)).toEqual([
+      "Cart:default",
+      "Cart:empty",
+      "Payment:default",
+      "Payment:error.declined",
+      "Orphan:default",
+    ]);
+    expect(frames.find((f) => f.screen === "Cart")?.journey).toBe("Checkout");
+    expect(frames.find((f) => f.screen === "Orphan")?.journey).toBeUndefined();
+    // the file set matches the flat naming
+    expect(frames.find((f) => f.screen === "Payment" && f.state === "error.declined")?.file).toBe(
+      "Payment--error-declined.svg",
+    );
   });
 });
 

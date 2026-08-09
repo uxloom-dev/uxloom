@@ -58,6 +58,7 @@ optional `uxloom.map.json` screen registry — both CI-ready.
 | `project_import` / `project_export` | Whole-design registration / retrieval in one call |
 | `palette_check` | WCAG AA check of design-token color pairs, with thin-margin flags |
 | `project_audit` | Implementation drift: per-state verdicts (implemented / unimplemented / unproven) with file:line evidence |
+| `design_audit` | Reverse Figma/Penpot bridge: audit a design export (SVG/JSON or a `--manifest`) against the contract — which required screens/states have no frame; optional scaffold |
 | `design_review` | Iterative evidence-based review — max 3 rounds (enforced, persisted), six-part rubric incl. market fit; pairs with per-decision `rationale` in the format |
 | `comments_list` | Reviewer comments with lifecycle status — comments assigned via the preview's "→ agent" click are the agent's work queue |
 | `comment_context` | Full work packet for one comment: the pinned layout block, screen contract, journey refs, and screen-scoped findings |

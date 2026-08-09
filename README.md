@@ -52,11 +52,12 @@ in git — the design is data, versioned next to the code it specifies.
 ```bash
 npx uxloom init      # one-command setup: MCP config + agent skill + starter file
 npx uxloom preview   # live mocks (themed, commentable, EDITABLE in the browser)
-npx uxloom export    # shareable HTML — plus --svg (Figma/Penpot import) and
-                     #   --png (needs optional playwright)
+npx uxloom export    # shareable HTML — plus --svg (Figma/Penpot import; add
+                     #   --manifest for the round-trip key) and --png (playwright)
 npx uxloom check     # design completeness — exit 1 on errors, CI-ready
 npx uxloom audit     # implementation drift — web AND native (Swift/Kotlin/
-                     #   Dart/Java markers); --live verifies the real DOM
+                     #   Dart/Java markers); --live verifies the real DOM;
+                     #   --design <file|dir> audits a Figma/Penpot export vs the contract
 npx uxloom diff      # human-readable design diffs for PR review
 ```
 

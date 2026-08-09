@@ -123,7 +123,7 @@ npx uxloom diff --git main            # semantic diff vs main
 npx uxloom diff old.json new.json --markdown   # PR-comment ready
 </code></pre>
 <h4>Native apps too</h4>
-<p>The audit reads native markers: add <code>// data-ux-screen: X</code> and <code>// data-ux-state: y</code> comments (any language), or use <code>.accessibilityIdentifier("ux-state:y")</code> in SwiftUI / <code>Modifier.testTag("ux-state:y")</code> in Compose. With optional playwright (<code>npm i -D playwright</code>), <code>npx uxloom audit --live http://localhost:3000</code> verifies markers in the real DOM, and <code>npx uxloom export --png shots/</code> renders every screen×state to images. <code>npx uxloom export --svg mocks/</code> needs nothing extra — the SVGs import straight into Figma or Penpot.</p>
+<p>The audit reads native markers: add <code>// data-ux-screen: X</code> and <code>// data-ux-state: y</code> comments (any language), or use <code>.accessibilityIdentifier("ux-state:y")</code> in SwiftUI / <code>Modifier.testTag("ux-state:y")</code> in Compose. With optional playwright (<code>npm i -D playwright</code>), <code>npx uxloom audit --live http://localhost:3000</code> verifies markers in the real DOM, and <code>npx uxloom export --png shots/</code> renders every screen×state to images. <code>npx uxloom export --svg mocks/</code> needs nothing extra — the SVGs import straight into Figma or Penpot, with frames named <code>Screen / state</code>. Add <code>--manifest</code> and the bridge runs both ways: after a designer edits in Figma/Penpot and exports (SVG or JSON), <code>npx uxloom audit --design their-export/</code> proves which required screens and states the design is still missing — the same CI gate, now on the mocks.</p>
 <h4>Designers: comment directly on the mocks — and hand them to the agent</h4>
 <p>In <code>npx uxloom preview</code>, toggle comment mode and click anywhere on a screen to leave feedback. Open comments appear in <code>uxloom check</code> as <code>reviewer-comment</code> warnings — your feedback enters the agent's fix loop, and you resolve it in the preview when it's addressed.</p>
 <p>Click <strong>"→ agent"</strong> on any comment to assign it. The agent (any MCP client — Claude, Codex, anything) then reads the whole work packet with <code>comment_context</code>: the pinned layout block, the screen contract, the journey references, and the current findings for that screen. It makes the change and calls <code>comment_resolve</code> with a note explaining what it did — the pin clears live in your preview. One click turns a pinned note into addressed work.</p>
@@ -434,6 +434,14 @@ Widget build(BuildContext context) {
 <tr><td><code>state-marker-static</code></td><td>warning</td><td>a conditional-by-nature state (<code>loading</code>, <code>empty</code>, or any <code>error*</code>) has no conditional-rendering signal (<code>&amp;&amp;</code>, ternary/<code>?:</code>, <code>if</code>, <code>guard</code>, <code>switch</code>, <code>when</code>, <code>.let</code>, <code>v-if</code>, <code>*ngIf</code>, <code>{#if</code>, <code>.map(</code>, optional chaining) on its line or the 3 lines above — the state is likely always- or never-rendered. Applies to all three marker forms. Not applied to <code>default</code> or custom states, and suppressed inside components named after the state (e.g. <code>function LoadingSkeleton</code>, <code>struct LoadingView</code>, <code>fun EmptyState</code>, <code>class ErrorBanner</code>), where the conditional lives at the call site</td></tr>
 </tbody></table></div>
 <p>Fixing the warnings is always the same move: render the real state UI inside (or as) the marked element, gated by the condition that actually produces the state — never relocate the marker to silence the check. Static heuristics narrow washing; they cannot eliminate it — fixture and browser tiers (4–5) remain future work.</p>
+<h3>Design audit — drift between the contract and the design file</h3>
+<p>The same drift check runs in the other direction, against a Figma/Penpot export instead of code. <code>uxloom:design_audit</code> (or <code>npx uxloom audit --design &lt;file|dir&gt;</code>) reads a designer's exported SVG or JSON — or a <code>uxloom export --svg --manifest</code> folder — recovers each frame's screen×state from its name (grammar <code>Screen / state</code>, or the manifest), and reports:</p>
+<ul>
+<li><code>design-screen-unmapped</code> (error) — a contracted screen has no frame</li>
+<li><code>design-state-missing</code> (error) — a required state has no frame</li>
+<li><code>design-frame-unmapped</code> (warning) — a frame matches no contracted screen</li>
+</ul>
+<p>Pass <code>scaffold</code> / <code>--scaffold &lt;out&gt;</code> to write a draft <code>{ screens }</code> fragment for the unmapped frames (it never overwrites). Zero API coupling — it reads files the designer already exports. Frames named by <code>uxloom export --svg</code> round-trip losslessly, so a design that started from the contract re-audits clean until someone drops a required state.</p>
 <h3>Workflow for agents</h3>
 <ol>
 <li>When <strong>implementing</strong> from a contract: emit markers as you build each</li>
@@ -443,6 +451,10 @@ Widget build(BuildContext context) {
 <li>When <strong>auditing</strong> an existing codebase: run uxloom:project_audit; for</li>
 </ol>
 <p>   unproven screens, read the code, add markers where states genuinely    render, re-run. States you cannot mark truthfully are your gap list.</p>
+<ol>
+<li>When <strong>auditing a design</strong>: run uxloom:design_audit against the designer's</li>
+</ol>
+<p>   export; missing screens/states are the design's gap list — feed them back    into the contract or the mocks.</p>
 <ol>
 <li>In CI: <code>npx uxloom check &amp;&amp; npx uxloom audit</code> — design completeness</li>
 </ol>
