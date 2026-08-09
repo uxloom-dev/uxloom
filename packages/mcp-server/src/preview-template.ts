@@ -171,6 +171,11 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
               align-self: flex-start; border: none; box-shadow: var(--elev-1); }
   .b-button.ghost { background: transparent; color: var(--mock-text, var(--ink));
                     border: 1px solid var(--hair); box-shadow: none; }
+  /* R33 — button variants */
+  .b-button.danger { background: var(--danger); }
+  .b-button.secondary { background: var(--accent-soft); color: var(--mock-accent, var(--ink)); box-shadow: none; }
+  .b-button.disabled { background: var(--sunken); color: var(--mock-muted, var(--dim));
+                       border: 1px solid var(--hair); box-shadow: none; }
 
   /* fields */
   .b-field { background: transparent; border: none; box-shadow: none; padding: 0; }
@@ -179,6 +184,10 @@ export const PREVIEW_TEMPLATE = `<!DOCTYPE html>
   .b-field .inp { display: flex; align-items: center; height: 40px; padding: 0 13px; font-size: 13px;
                   border: 1px solid var(--hair); border-radius: calc(var(--mock-radius, 10px) - 2px);
                   background: var(--sunken); color: var(--mock-muted, var(--dim)); }
+  /* R33 — field states */
+  .b-field.error .inp { border-color: var(--danger); border-width: 1.5px; }
+  .b-field .err-note { color: var(--danger); font-size: 12px; margin-top: 6px; }
+  .b-field.disabled { opacity: .55; }
 
   /* list rows */
   .row { display: flex; gap: 12px; align-items: center; border: 1px solid var(--hair);
@@ -589,11 +598,17 @@ function renderBlock(b, screen) {
         el.appendChild(tr);
       }
       break;
-    case "button": el = h("button", "b-button" + (isGhost(b.label) ? " ghost" : ""), b.label || "Action"); break;
+    case "button": {
+      // R33 — explicit variant wins; else infer ghost from the label
+      var bv = b.state === "disabled" ? "disabled" : (b.variant || (isGhost(b.label) ? "ghost" : "primary"));
+      el = h("button", "b-button" + (bv === "primary" ? "" : " " + bv), b.label || "Action");
+      break;
+    }
     case "field":
-      el = h("div", "b b-field");
+      el = h("div", "b b-field" + (b.state === "error" ? " error" : b.state === "disabled" ? " disabled" : ""));
       el.appendChild(h("div", "lab", b.label || "Field"));
       el.appendChild(h("div", "inp", placeholderFor(b.label)));
+      if (b.state === "error") el.appendChild(h("div", "err-note", "Please check this field."));
       break;
     case "text":
       el = h("div", "b b-text"); if (b.label) el.appendChild(h("div", "lab", b.label));

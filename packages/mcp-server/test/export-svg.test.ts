@@ -215,3 +215,27 @@ describe("expanded token model (R32)", () => {
     expect(buildScreenSvg(bordered, "S", "default")).toContain("#123456");
   });
 });
+
+describe("component variants (R33)", () => {
+  const one = (block: object, tokens?: object): SvgProject => ({
+    name: "x", platforms: ["web"], ...(tokens ? { tokens } : {}),
+    screens: [{ id: "S", requiredStates: ["default"], layout: { blocks: [block] } }],
+  });
+
+  it("renders a danger button in the danger color", () => {
+    expect(buildScreenSvg(one({ type: "button", label: "Delete", variant: "danger" }, { colors: { danger: "#ff0000" } }), "S", "default")).toContain("#ff0000");
+  });
+
+  it("marks an error field with the danger color and a helper line", () => {
+    const svg = buildScreenSvg(one({ type: "field", label: "Email", state: "error" }, { colors: { danger: "#ff0000" } }), "S", "default");
+    expect(svg).toContain("#ff0000");
+    expect(svg).toContain("Please check this field");
+  });
+
+  it("still infers a ghost button from the label when no variant is set", () => {
+    // "Learn more" → ghost → no accent fill anywhere on this single-button screen
+    const svg = buildScreenSvg(one({ type: "button", label: "Learn more" }, { colors: { accent: "#abcdef" } }), "S", "default");
+    expect(svg).toContain("Learn more");
+    expect(svg).not.toContain("#abcdef");
+  });
+});

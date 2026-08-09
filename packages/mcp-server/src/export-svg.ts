@@ -24,6 +24,8 @@ export interface SvgBlock {
   source?: string;
   sort?: string[];
   filter?: string[];
+  variant?: "primary" | "secondary" | "danger" | "ghost";
+  state?: "default" | "error" | "disabled";
   children?: SvgBlock[];
 }
 export interface SvgComponent {
@@ -345,20 +347,36 @@ function blockSvg(b: SvgBlock, x: number, y: number, w: number, th: Theme): Rend
       h = 38;
       const lbl = label || "Action";
       const bw = Math.min(w, 40 + lbl.length * 7.5);
-      if (isGhost(label)) {
-        parts.push(rect(x, y, bw, h, `rx="${Math.max(0, r - 2)}" fill="none" stroke="${th.hair}" stroke-width="1"`));
-        parts.push(text(x + bw / 2, y + 24, lbl, `font-size="13" font-weight="600" fill="${th.text}" text-anchor="middle"`));
-      } else {
-        parts.push(rect(x, y, bw, h, `rx="${Math.max(0, r - 2)}" fill="${th.accent}"`));
+      const rr = `rx="${Math.max(0, r - 2)}"`;
+      // R33 — explicit variant wins; else infer ghost from the label.
+      const variant = b.state === "disabled" ? "disabled"
+        : (b.variant ?? (isGhost(label) ? "ghost" : "primary"));
+      if (variant === "primary") {
+        parts.push(rect(x, y, bw, h, `${rr} fill="${th.accent}"`));
         parts.push(text(x + bw / 2, y + 24, lbl, `font-size="13" font-weight="600" fill="#ffffff" text-anchor="middle"`));
+      } else if (variant === "danger") {
+        parts.push(rect(x, y, bw, h, `${rr} fill="${th.danger}"`));
+        parts.push(text(x + bw / 2, y + 24, lbl, `font-size="13" font-weight="600" fill="#ffffff" text-anchor="middle"`));
+      } else if (variant === "secondary") {
+        parts.push(rect(x, y, bw, h, `${rr} fill="${th.accentSoft}"`));
+        parts.push(text(x + bw / 2, y + 24, lbl, `font-size="13" font-weight="600" fill="${th.accent}" text-anchor="middle"`));
+      } else if (variant === "disabled") {
+        parts.push(rect(x, y, bw, h, `${rr} fill="${th.sunken}" stroke="${th.hair}" stroke-width="1"`));
+        parts.push(text(x + bw / 2, y + 24, lbl, `font-size="13" font-weight="600" fill="${th.muted}" text-anchor="middle"`));
+      } else { // ghost
+        parts.push(rect(x, y, bw, h, `${rr} fill="none" stroke="${th.hair}" stroke-width="1"`));
+        parts.push(text(x + bw / 2, y + 24, lbl, `font-size="13" font-weight="600" fill="${th.text}" text-anchor="middle"`));
       }
       break;
     }
     case "field": {
-      h = 66;
-      parts.push(text(x, y + 14, label || "Field", `font-size="12.5" font-weight="600" fill="${th.text}"`));
-      parts.push(rect(x, y + 22, w, 40, `rx="${Math.max(0, r - 2)}" fill="${th.sunken}" stroke="${th.hair}" stroke-width="1"`));
+      const error = b.state === "error", disabled = b.state === "disabled";
+      const border = error ? th.danger : th.hair;
+      h = error ? 84 : 66;
+      parts.push(text(x, y + 14, label || "Field", `font-size="12.5" font-weight="600" fill="${disabled ? th.muted : th.text}"`));
+      parts.push(rect(x, y + 22, w, 40, `rx="${Math.max(0, r - 2)}" fill="${th.sunken}" stroke="${border}" stroke-width="${error ? 1.5 : 1}"`));
       parts.push(text(x + 13, y + 47, placeholderFor(label), `font-size="13" fill="${th.muted}"`));
+      if (error) parts.push(text(x, y + 78, "Please check this field.", `font-size="12" fill="${th.danger}"`));
       break;
     }
     case "image": {

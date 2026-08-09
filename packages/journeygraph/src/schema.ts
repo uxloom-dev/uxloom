@@ -75,6 +75,10 @@ const BlockBase = z.object({
   sort: z.array(z.string().min(1)).optional(),
   /** Filterable columns/keys (list & table blocks) — interaction intent. */
   filter: z.array(z.string().min(1)).optional(),
+  /** R33 — component variant (buttons, badges): primary is the default. */
+  variant: z.enum(["primary", "secondary", "danger", "ghost"]).optional(),
+  /** R33 — component state (fields, buttons): default when absent. */
+  state: z.enum(["default", "error", "disabled"]).optional(),
 });
 export const BlockSchema = BlockBase.extend({
   children: z.array(BlockBase.strict()).optional(),

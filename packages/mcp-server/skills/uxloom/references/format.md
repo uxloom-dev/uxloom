@@ -145,6 +145,12 @@ any block takes `source` naming its data binding. Screens take `data`
 (`{ "messages": "Message[]", "filter": "StatusFilter" }`) so implementers
 know the shape.
 
+**Component variants (v0.13)** — buttons take `variant: "primary" |
+"secondary" | "danger" | "ghost"` (primary by default; ghost is inferred
+from labels like "Cancel"/"Learn more" when unset), and fields/buttons take
+`state: "default" | "error" | "disabled"` — an `error` field renders a red
+outline + helper line. Both the preview and the SVG export render them.
+
 **Fragments (team scale)** — the base file may declare
 `"include": ["designs/*.json"]`; fragment files are `{ "journeys": [...],
 "screens": [...] }` merged at load. Duplicate ids across files are errors.

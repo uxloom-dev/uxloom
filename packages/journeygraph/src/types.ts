@@ -110,6 +110,10 @@ export interface Block {
   sort?: string[];
   /** Filterable columns/keys (list & table blocks) — interaction intent. */
   filter?: string[];
+  /** R33 — component variant (buttons, badges); primary is the default. */
+  variant?: "primary" | "secondary" | "danger" | "ghost";
+  /** R33 — component state (fields, buttons); default when absent. */
+  state?: "default" | "error" | "disabled";
   children?: Block[];
 }
 
